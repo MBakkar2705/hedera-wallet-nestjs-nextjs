@@ -30,6 +30,15 @@ jobs:
       - name: Backend tests
         run: pnpm test
 
+      - name: Backend lint
+        run: pnpm --filter backend lint
+
+      - name: Backend format check
+        run: pnpm --filter backend format:check
+
+      - name: Backend e2e tests
+        run: pnpm --filter backend test:e2e
+
       - name: Frontend lint
         run: pnpm --filter frontend lint
 
