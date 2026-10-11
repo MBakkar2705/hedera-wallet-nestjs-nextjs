@@ -16,6 +16,7 @@
 - [Running Tests](#running-tests)
 - [Swagger Access](#swagger-access)
 - [Docker and CI](#docker-and-ci)
+- [Backend evolutions](#backend-evolutions)
 - [Architecture Decision Records](#architecture-decision-records)
 - [Notes](#notes)
 - [Author](#author)
@@ -1177,6 +1178,16 @@ docker run --rm --init -p 3000:3000 --env-file backend/.env hedera-wallet
 Without these variables, the application exits at startup. The `--init` option is needed for Ctrl+C to stop the container. Without it, Ctrl+C had no effect after about 30 seconds and `docker stop` took about 10 seconds; with it, Ctrl+C stopped the container in about 2 seconds (all observed). In the Nest log, the application is process 1 without `--init` and process 7 with it. The cause was not tested separately.
 
 The GitHub Actions workflow (.github/workflows/ci.yml) installs dependencies with pnpm, runs the backend tests (`pnpm test`), the backend lint, the backend format check and the backend end-to-end test, then the lint and the build of the frontend, on every push and pull request.
+
+---
+
+## Backend evolutions
+
+The backend evolutions listed in [docs/backend-evolutions.md](docs/backend-evolutions.md) are made in lots: one branch, one pull request and one merge per lot. The table lists the lots merged into main.
+
+| Lot               | What it changes                                                                                                                                                 | Items  | ADR                    |
+|-------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|--------|------------------------|
+| Rules and tooling | Rules for the AI assistant, backend lint and Prettier format check, runnable end-to-end test, Hedera clients closed at shutdown, CI steps, `docker run --init` | 11, 15 | 0004, 0005, 0006, 0013 |
 
 ---
 
