@@ -265,7 +265,7 @@ Outcome:
 
 The account information for 0.0.10936687 was successfully retrieved.
 The HBAR balance reflects the latest state on the Hedera testnet
-An unknown account ID returns HTTP 500 with the message "Internal server error": getAccountInfo wraps every SDK error in a plain Error, so the API does not return a 404.
+An unknown account ID returns HTTP 404 (`{"message":"Hedera does not know this account (INVALID_ACCOUNT_ID)","error":"Not Found","statusCode":404}`) and a malformed ID such as `abc` returns HTTP 400 (`failed to parse entity id: abc`). Both were observed with curl, see [ADR 0014](docs/adr/0014-global-filter-for-hedera-errors.md). Before that change, both returned HTTP 500 with the message "Internal server error".
 
 This retrieval does not create a new row in SQLite, but can be cross-checked against existing entries in hedera-wallet.db
 
@@ -996,6 +996,18 @@ Jest reports full execution of topics.service.ts:
 100% statements, 100% functions, 100% lines, and 100% branches.
 All conditional paths, including memo injection and error handling, are explicitly covered. The service logic is stable, predictable, and thoroughly validated in isolation
 
+### Unit Testing – HederaExceptionFilter
+
+This suite starts a small Nest application whose routes only throw an error, and sends real HTTP requests to it. The Hedera error is a real `PrecheckStatusError` of the SDK. It checks that `INVALID_ACCOUNT_ID` gives 404, that `INSUFFICIENT_PAYER_BALANCE` and another Hedera status give 400, that a malformed ID gives 400, that an `HttpException` is unchanged and that an unexpected error stays a 500 without its message.
+
+Execution:
+
+pnpm run test
+
+Outcome:
+
+5 suites and 26 tests passed (reported by the author). See [ADR 0014](docs/adr/0014-global-filter-for-hedera-errors.md).
+
 ---
 
 ## Swagger Access
@@ -1218,6 +1230,7 @@ The records are numbered in the order of the project: first the backend, then th
 **Backend evolutions**
 
 - [ADR 0013: Backend lint, format and end-to-end checks](docs/adr/0013-backend-lint-format-and-e2e-checks.md)
+- [ADR 0014: A global filter that turns Hedera errors into HTTP responses](docs/adr/0014-global-filter-for-hedera-errors.md)
 
 The records were renumbered to follow this order. Earlier commit messages use the former numbers: former 0001 is now 0009, 0002 is 0008, 0003 is 0007, 0005 is 0010, 0006 is 0011 and 0007 is 0012. The former 0008 to 0012 were never committed under those numbers. ADR 0004 keeps its number.
 

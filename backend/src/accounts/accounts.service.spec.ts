@@ -143,7 +143,7 @@ describe('AccountsService', () => {
       });
     });
 
-    it('should throw if SDK throws inside execute()', async () => {
+    it('should let the SDK error through (the global filter maps it)', async () => {
       const { AccountInfoQuery } = require('@hashgraph/sdk');
       AccountInfoQuery.mockImplementation(() => ({
         setAccountId: jest.fn().mockReturnThis(),
@@ -153,7 +153,7 @@ describe('AccountsService', () => {
       }));
 
       await expect(service.getAccountInfo('0.0.invalid')).rejects.toThrow(
-        'Failed to fetch account info: Error: Simulated SDK failure',
+        'Simulated SDK failure',
       );
     });
   });

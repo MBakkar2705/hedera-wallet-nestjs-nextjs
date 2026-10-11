@@ -66,21 +66,18 @@ export class AccountsService implements OnModuleDestroy {
   }
 
   async getAccountInfo(accountId: string) {
-    try {
-      const info = await new AccountInfoQuery()
-        .setAccountId(accountId)
-        .execute(this.client);
+    // Errors are not caught here: HederaExceptionFilter maps them to HTTP.
+    const info = await new AccountInfoQuery()
+      .setAccountId(accountId)
+      .execute(this.client);
 
-      return {
-        accountId: info.accountId.toString(),
-        hbarBalance: info.balance.toString(),
-        tokenAssociations: Array.from(info.tokenRelationships.values()).map(
-          (rel) => rel.tokenId.toString(),
-        ),
-      };
-    } catch (error) {
-      throw new Error(`Failed to fetch account info: ${error}`);
-    }
+    return {
+      accountId: info.accountId.toString(),
+      hbarBalance: info.balance.toString(),
+      tokenAssociations: Array.from(info.tokenRelationships.values()).map(
+        (rel) => rel.tokenId.toString(),
+      ),
+    };
   }
 
   async transferHbar({
