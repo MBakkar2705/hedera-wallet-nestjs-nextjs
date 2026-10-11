@@ -16,6 +16,7 @@
 - [Running Tests](#running-tests)
 - [Swagger Access](#swagger-access)
 - [Docker and CI](#docker-and-ci)
+- [Backend evolutions](#backend-evolutions)
 - [Architecture Decision Records](#architecture-decision-records)
 - [Notes](#notes)
 - [Author](#author)
@@ -52,6 +53,8 @@ Backend:
 - @hashgraph/sdk (Hedera SDK)
 - SQLite (local data storage)
 - Jest (unit testing)
+- Supertest (end-to-end test)
+- ESLint 9 and Prettier (lint and format)
 - Swagger (API documentation)
 
 Frontend:
@@ -87,7 +90,9 @@ Frontend:
 | Frontend: topics screen                         | Done        |
 | Frontend: design (Tailwind, local components)   | Done        |
 | Backend and frontend in sibling folders         | Done        |
-| CI: backend tests, frontend lint and build      | Done        |
+| Backend lint and format (ESLint, Prettier)      | Done        |
+| Backend end-to-end test (supertest)             | Done        |
+| CI: backend tests, lint, format check and e2e; frontend lint and build | Done        |
 
 ---
 
@@ -647,6 +652,7 @@ hedera-wallet-nestjs-nextjs\
 │   ├── test/
 │   ├── Dockerfile
 │   ├── .env.example
+│   ├── .prettierrc
 │   ├── eslint.config.mjs
 │   ├── jest.config.js
 │   ├── nest-cli.json
@@ -837,6 +843,18 @@ pnpm run test:cov   // Runs all tests and generates coverage report
 
 The coverage report includes detailed metrics per file, function, branch, and line.
 It is stored in the `coverage` folder of `backend/` (the Jest default, `coverage/lcov-report/index.html`) after execution.
+
+Lint, format and end-to-end commands (from the repository root; the CI runs them with `pnpm --filter backend`):
+
+pnpm --filter backend lint          // ESLint on backend/src and backend/test
+
+pnpm --filter backend format:check  // Prettier check, no file modified
+
+pnpm --filter backend format        // Prettier rewrites the files
+
+pnpm --filter backend test:e2e      // End-to-end test
+
+The end-to-end test is `backend/test/app.e2e-spec.ts`. It starts the application module and checks the response of `GET /`. It sets throwaway Hedera credentials itself (a key generated at each run), so no `.env` file is needed to run it. The application still opens the local `hedera-wallet.db`. The Hedera clients are closed when the application closes: without that, Jest did not exit (observed).
 
 There is no frontend test script yet. The frontend is checked by `pnpm --filter frontend lint`, `pnpm --filter frontend build` and by hand in a browser. The CI runs the lint and the build.
 
@@ -1155,11 +1173,21 @@ docker build -f backend/Dockerfile -t hedera-wallet .
 Credentials are not included in the image (`.env` files are excluded by `.dockerignore`).
 Running the container requires the four variables described in [Environment Variables](#environment-variables), provided at runtime:
 
-docker run --rm -p 3000:3000 --env-file backend/.env hedera-wallet
+docker run --rm --init -p 3000:3000 --env-file backend/.env hedera-wallet
 
-Without these variables, the application exits at startup. Stop the container with `docker stop`: Ctrl+C in the terminal did not stop it (observed, cause not investigated).
+Without these variables, the application exits at startup. The `--init` option is needed for Ctrl+C to stop the container. Without it, Ctrl+C had no effect after about 30 seconds and `docker stop` took about 10 seconds; with it, Ctrl+C stopped the container in about 2 seconds (all observed). In the Nest log, the application is process 1 without `--init` and process 7 with it. The cause was not tested separately.
 
-The GitHub Actions workflow (.github/workflows/ci.yml) installs dependencies with pnpm, runs the backend tests (`pnpm test`), then the lint and the build of the frontend, on every push and pull request.
+The GitHub Actions workflow (.github/workflows/ci.yml) installs dependencies with pnpm, runs the backend tests (`pnpm test`), the backend lint, the backend format check and the backend end-to-end test, then the lint and the build of the frontend, on every push and pull request.
+
+---
+
+## Backend evolutions
+
+The backend evolutions listed in [docs/backend-evolutions.md](docs/backend-evolutions.md) are made in lots: one branch, one pull request and one merge per lot. The table lists the lots merged into main.
+
+| Lot               | What it changes                                                                                                                                                 | Items  | ADR                    |
+|-------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|--------|------------------------|
+| Rules and tooling | Rules for the AI assistant, backend lint and Prettier format check, runnable end-to-end test, Hedera clients closed at shutdown, CI steps, `docker run --init` | 11, 15 | 0004, 0005, 0006, 0013 |
 
 ---
 
@@ -1186,6 +1214,10 @@ The records are numbered in the order of the project: first the backend, then th
 - [ADR 0010: Active account held in memory](docs/adr/0010-active-account-in-memory.md)
 - [ADR 0011: Design system with Tailwind tokens and local components](docs/adr/0011-design-system-tailwind-local-components.md)
 - [ADR 0012: Backend and frontend in sibling folders](docs/adr/0012-backend-and-frontend-in-sibling-folders.md)
+
+**Backend evolutions**
+
+- [ADR 0013: Backend lint, format and end-to-end checks](docs/adr/0013-backend-lint-format-and-e2e-checks.md)
 
 The records were renumbered to follow this order. Earlier commit messages use the former numbers: former 0001 is now 0009, 0002 is 0008, 0003 is 0007, 0005 is 0010, 0006 is 0011 and 0007 is 0012. The former 0008 to 0012 were never committed under those numbers. ADR 0004 keeps its number.
 

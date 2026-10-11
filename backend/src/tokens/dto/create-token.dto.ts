@@ -10,7 +10,11 @@ export class CreateTokenDto {
   @IsString()
   symbol: string;
 
-  @ApiProperty({ example: 1000, description: 'Initial supply of the token', minimum: 1 })
+  @ApiProperty({
+    example: 1000,
+    description: 'Initial supply of the token',
+    minimum: 1,
+  })
   @IsInt()
   @Min(1)
   initialSupply: number;

@@ -1,8 +1,9 @@
 # ADR 0004: Rules for the AI coding assistant
 
-- Status: Accepted (the paths of rules 4, 7 and 8 amended by ADR 0012: `src/` is now `backend/src/`, and the protected backend files are in `backend/`)
+- Status: Accepted (the paths of rules 4, 7 and 8 amended by ADR 0012: `src/` is now `backend/src/`, and the protected backend files are in `backend/`; rules 4 and 5 amended by the note of 2026-10-10)
 - Date: 2026-10-08
 - Note (2026-10-09): the last item of "Not proven" says that no frontend code exists. The frontend has four screens now (see ADR 0010 and ADR 0011), and the question of that item is still not proven.
+- Note (2026-10-10): The assistant now writes the code in `backend/`, `frontend/` and `docs/`, after a detailed plan approved by the author and with diffs he reviews. The author runs the tests, reviews every change and commits, and must still be able to explain every change. This replaces rule 5. In rule 4, the files that may be modified are the ones named in the approved plan; `.github/`, the root `package.json` and `pnpm-workspace.yaml` still need an explicit request. The section "Alternatives considered" records the original choice and is no longer current. Rule 5 was not followed to the letter before this note: the assistant wrote the four files of the first frontend screen.
 
 ## Context
 

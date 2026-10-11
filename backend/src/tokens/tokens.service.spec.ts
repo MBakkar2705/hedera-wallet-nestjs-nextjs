@@ -4,7 +4,6 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { TokenEntity } from './entities/token.entity';
 import { AssociationEntity } from './entities/association.entity';
 import { TokenTransferEntity } from './entities/token-transfer.entity';
-import { Repository } from 'typeorm';
 import { CreateTokenDto } from './dto/create-token.dto';
 import { AssociateTokenDto } from './dto/associate-token.dto';
 import { TransferTokenDto } from './dto/transfer-token.dto';
@@ -91,8 +90,14 @@ describe('TokensService – full stable test', () => {
       providers: [
         TokensService,
         { provide: getRepositoryToken(TokenEntity), useValue: mockTokenRepo },
-        { provide: getRepositoryToken(AssociationEntity), useValue: mockAssocRepo },
-        { provide: getRepositoryToken(TokenTransferEntity), useValue: mockTransferRepo },
+        {
+          provide: getRepositoryToken(AssociationEntity),
+          useValue: mockAssocRepo,
+        },
+        {
+          provide: getRepositoryToken(TokenTransferEntity),
+          useValue: mockTransferRepo,
+        },
       ],
     }).compile();
 
@@ -131,8 +136,14 @@ describe('TokensService – full stable test', () => {
         providers: [
           TokensService,
           { provide: getRepositoryToken(TokenEntity), useValue: mockTokenRepo },
-          { provide: getRepositoryToken(AssociationEntity), useValue: mockAssocRepo },
-          { provide: getRepositoryToken(TokenTransferEntity), useValue: mockTransferRepo },
+          {
+            provide: getRepositoryToken(AssociationEntity),
+            useValue: mockAssocRepo,
+          },
+          {
+            provide: getRepositoryToken(TokenTransferEntity),
+            useValue: mockTransferRepo,
+          },
         ],
       }).compile();
 
@@ -152,8 +163,14 @@ describe('TokensService – full stable test', () => {
       providers: [
         TokensService,
         { provide: getRepositoryToken(TokenEntity), useValue: mockTokenRepo },
-        { provide: getRepositoryToken(AssociationEntity), useValue: mockAssocRepo },
-        { provide: getRepositoryToken(TokenTransferEntity), useValue: mockTransferRepo },
+        {
+          provide: getRepositoryToken(AssociationEntity),
+          useValue: mockAssocRepo,
+        },
+        {
+          provide: getRepositoryToken(TokenTransferEntity),
+          useValue: mockTransferRepo,
+        },
       ],
     }).compile();
 
@@ -166,7 +183,7 @@ describe('TokensService – full stable test', () => {
     };
 
     await expect(brokenService.createToken(dto)).rejects.toThrow(
-      'Operator credentials not properly initialized'
+      'Operator credentials not properly initialized',
     );
   });
 
@@ -177,26 +194,34 @@ describe('TokensService – full stable test', () => {
       operatorPublicKey: 'mocked-public-key',
     });
 
-    jest.mocked(require('@hashgraph/sdk').TokenCreateTransaction).mockImplementation(() => ({
-      setTokenName: jest.fn().mockReturnThis(),
-      setTokenSymbol: jest.fn().mockReturnThis(),
-      setInitialSupply: jest.fn().mockReturnThis(),
-      setDecimals: jest.fn().mockReturnThis(),
-      setTreasuryAccountId: jest.fn().mockReturnThis(),
-      setAdminKey: jest.fn().mockReturnThis(),
-      freezeWith: jest.fn().mockReturnThis(),
-      sign: jest.fn().mockReturnThis(),
-      execute: jest.fn().mockResolvedValue({
-        getReceipt: jest.fn().mockResolvedValue({ tokenId: null }),
-      }),
-    }));
+    jest
+      .mocked(require('@hashgraph/sdk').TokenCreateTransaction)
+      .mockImplementation(() => ({
+        setTokenName: jest.fn().mockReturnThis(),
+        setTokenSymbol: jest.fn().mockReturnThis(),
+        setInitialSupply: jest.fn().mockReturnThis(),
+        setDecimals: jest.fn().mockReturnThis(),
+        setTreasuryAccountId: jest.fn().mockReturnThis(),
+        setAdminKey: jest.fn().mockReturnThis(),
+        freezeWith: jest.fn().mockReturnThis(),
+        sign: jest.fn().mockReturnThis(),
+        execute: jest.fn().mockResolvedValue({
+          getReceipt: jest.fn().mockResolvedValue({ tokenId: null }),
+        }),
+      }));
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TokensService,
         { provide: getRepositoryToken(TokenEntity), useValue: mockTokenRepo },
-        { provide: getRepositoryToken(AssociationEntity), useValue: mockAssocRepo },
-        { provide: getRepositoryToken(TokenTransferEntity), useValue: mockTransferRepo },
+        {
+          provide: getRepositoryToken(AssociationEntity),
+          useValue: mockAssocRepo,
+        },
+        {
+          provide: getRepositoryToken(TokenTransferEntity),
+          useValue: mockTransferRepo,
+        },
       ],
     }).compile();
 
@@ -209,7 +234,7 @@ describe('TokensService – full stable test', () => {
     };
 
     await expect(service.createToken(dto)).rejects.toThrow(
-      'Token creation failed: tokenId missing in receipt'
+      'Token creation failed: tokenId missing in receipt',
     );
   });
 
@@ -236,22 +261,32 @@ describe('TokensService – full stable test', () => {
   });
 
   it('should throw if token association status is not SUCCESS', async () => {
-    jest.mocked(require('@hashgraph/sdk').TokenAssociateTransaction).mockImplementation(() => ({
-      setAccountId: jest.fn().mockReturnThis(),
-      setTokenIds: jest.fn().mockReturnThis(),
-      freezeWith: jest.fn().mockReturnThis(),
-      sign: jest.fn().mockReturnThis(),
-      execute: jest.fn().mockResolvedValue({
-        getReceipt: jest.fn().mockResolvedValue({ status: { toString: () => 'FAILED' } }),
-      }),
-    }));
+    jest
+      .mocked(require('@hashgraph/sdk').TokenAssociateTransaction)
+      .mockImplementation(() => ({
+        setAccountId: jest.fn().mockReturnThis(),
+        setTokenIds: jest.fn().mockReturnThis(),
+        freezeWith: jest.fn().mockReturnThis(),
+        sign: jest.fn().mockReturnThis(),
+        execute: jest.fn().mockResolvedValue({
+          getReceipt: jest
+            .fn()
+            .mockResolvedValue({ status: { toString: () => 'FAILED' } }),
+        }),
+      }));
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TokensService,
         { provide: getRepositoryToken(TokenEntity), useValue: mockTokenRepo },
-        { provide: getRepositoryToken(AssociationEntity), useValue: mockAssocRepo },
-        { provide: getRepositoryToken(TokenTransferEntity), useValue: mockTransferRepo },
+        {
+          provide: getRepositoryToken(AssociationEntity),
+          useValue: mockAssocRepo,
+        },
+        {
+          provide: getRepositoryToken(TokenTransferEntity),
+          useValue: mockTransferRepo,
+        },
       ],
     }).compile();
 
@@ -264,7 +299,7 @@ describe('TokensService – full stable test', () => {
     };
 
     await expect(service.associateToken(dto)).rejects.toThrow(
-      'Association failed: FAILED'
+      'Association failed: FAILED',
     );
   });
 
@@ -297,22 +332,32 @@ describe('TokensService – full stable test', () => {
     });
   });
   it('should throw if token transfer status is not SUCCESS', async () => {
-    jest.mocked(require('@hashgraph/sdk').TransferTransaction).mockImplementation(() => ({
-      addTokenTransfer: jest.fn().mockReturnThis(),
-      freezeWith: jest.fn().mockReturnThis(),
-      sign: jest.fn().mockReturnThis(),
-      execute: jest.fn().mockResolvedValue({
-        getReceipt: jest.fn().mockResolvedValue({ status: { toString: () => 'REJECTED' } }),
-        transactionId: { toString: () => 'tx-failed' },
-      }),
-    }));
+    jest
+      .mocked(require('@hashgraph/sdk').TransferTransaction)
+      .mockImplementation(() => ({
+        addTokenTransfer: jest.fn().mockReturnThis(),
+        freezeWith: jest.fn().mockReturnThis(),
+        sign: jest.fn().mockReturnThis(),
+        execute: jest.fn().mockResolvedValue({
+          getReceipt: jest
+            .fn()
+            .mockResolvedValue({ status: { toString: () => 'REJECTED' } }),
+          transactionId: { toString: () => 'tx-failed' },
+        }),
+      }));
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TokensService,
         { provide: getRepositoryToken(TokenEntity), useValue: mockTokenRepo },
-        { provide: getRepositoryToken(AssociationEntity), useValue: mockAssocRepo },
-        { provide: getRepositoryToken(TokenTransferEntity), useValue: mockTransferRepo },
+        {
+          provide: getRepositoryToken(AssociationEntity),
+          useValue: mockAssocRepo,
+        },
+        {
+          provide: getRepositoryToken(TokenTransferEntity),
+          useValue: mockTransferRepo,
+        },
       ],
     }).compile();
 
@@ -327,8 +372,7 @@ describe('TokensService – full stable test', () => {
     };
 
     await expect(service.transferToken(dto)).rejects.toThrow(
-      'Token transfer failed: REJECTED'
+      'Token transfer failed: REJECTED',
     );
   });
-
 });

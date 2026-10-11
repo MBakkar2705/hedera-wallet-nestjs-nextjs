@@ -7,6 +7,5 @@ export class CreateAccountDto {
     minimum: 0,
     type: Number,
   })
-
   initialBalance: number;
 }

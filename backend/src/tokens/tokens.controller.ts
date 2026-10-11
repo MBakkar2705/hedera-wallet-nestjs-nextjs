@@ -22,8 +22,14 @@ export class TokensController {
   @Post('associate')
   @ApiOperation({ summary: 'Associate a Hedera account with an HTS token' })
   @ApiBody({ type: AssociateTokenDto })
-  @ApiResponse({ status: 201, description: 'Token successfully associated to account' })
-  @ApiResponse({ status: 400, description: 'Association failed or validation error' })
+  @ApiResponse({
+    status: 201,
+    description: 'Token successfully associated to account',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Association failed or validation error',
+  })
   async associateToken(@Body() dto: AssociateTokenDto) {
     return await this.tokensService.associateToken(dto);
   }
@@ -32,7 +38,10 @@ export class TokensController {
   @ApiOperation({ summary: 'Transfer HTS tokens between accounts' })
   @ApiBody({ type: TransferTokenDto })
   @ApiResponse({ status: 201, description: 'Token successfully transferred' })
-  @ApiResponse({ status: 400, description: 'Transfer failed or validation error' })
+  @ApiResponse({
+    status: 400,
+    description: 'Transfer failed or validation error',
+  })
   async transferToken(@Body() dto: TransferTokenDto) {
     return await this.tokensService.transferToken(dto);
   }

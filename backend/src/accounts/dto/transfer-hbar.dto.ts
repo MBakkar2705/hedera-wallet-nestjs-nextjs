@@ -6,17 +6,26 @@ export class TransferHbarDto {
   @IsString()
   fromAccountId: string;
 
-  @ApiProperty({ example: '302e020100300506032b657004220420...', description: 'Sender private key' })
+  @ApiProperty({
+    example: '302e020100300506032b657004220420...',
+    description: 'Sender private key',
+  })
   @IsString()
   fromPrivateKey: string;
 
-  @ApiProperty({ example: '0.0.5678', description: 'Recipient Hedera account ID' })
+  @ApiProperty({
+    example: '0.0.5678',
+    description: 'Recipient Hedera account ID',
+  })
   @IsString()
   toAccountId: string;
 
-  @ApiProperty({ example: 25, description: 'Amount of HBAR to transfer', minimum: 1 })
+  @ApiProperty({
+    example: 25,
+    description: 'Amount of HBAR to transfer',
+    minimum: 1,
+  })
   @IsNumber()
   @Min(1)
   amount: number;
-
 }

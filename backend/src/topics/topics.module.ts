@@ -5,10 +5,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { TopicEntity } from './entities/topic.entity';
 import { MessageEntity } from './entities/message.entity';
 
-
 @Module({
   imports: [TypeOrmModule.forFeature([TopicEntity, MessageEntity])],
   providers: [TopicsService],
-  controllers: [TopicsController]
+  controllers: [TopicsController],
 })
 export class TopicsModule {}

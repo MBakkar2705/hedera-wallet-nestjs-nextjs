@@ -1,7 +1,8 @@
 # ADR 0005: A multi-stage Docker image for the backend
 
-- Status: Accepted
+- Status: Accepted (the run command amended by the note of 2026-10-11)
 - Date: 2026-10-09
+- Note (2026-10-11): `docker run --init` was tried. The run command is now `docker run --rm --init -p 3000:3000 --env-file backend/.env hedera-wallet`. The Dockerfile is unchanged, and `--init` must be given at each start. Observed by the author: without `--init`, Ctrl+C had no effect after about 30 seconds and `docker stop` took about 10 seconds; with `--init`, Ctrl+C stopped the container in about 2 seconds. In the Nest log, the application is process 1 without `--init` and process 7 with it. The cause was not tested separately. Another way to get the same result (in the image or in the code) was not evaluated. The last item of "Consequences" and the last item of "Not proven" are no longer current.
 
 ## Context
 

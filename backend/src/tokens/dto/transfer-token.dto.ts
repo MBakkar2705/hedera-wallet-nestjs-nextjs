@@ -6,11 +6,17 @@ export class TransferTokenDto {
   @IsString()
   fromAccountId: string;
 
-  @ApiProperty({ example: '302e020100300506032b657004220420...', description: 'Sender private key' })
+  @ApiProperty({
+    example: '302e020100300506032b657004220420...',
+    description: 'Sender private key',
+  })
   @IsString()
   fromPrivateKey: string;
 
-  @ApiProperty({ example: '0.0.5678', description: 'Recipient Hedera Account ID' })
+  @ApiProperty({
+    example: '0.0.5678',
+    description: 'Recipient Hedera Account ID',
+  })
   @IsString()
   toAccountId: string;
 
@@ -18,9 +24,12 @@ export class TransferTokenDto {
   @IsString()
   tokenId: string;
 
-  @ApiProperty({ example: 100, description: 'Amount of tokens to transfer', minimum: 1 })
+  @ApiProperty({
+    example: 100,
+    description: 'Amount of tokens to transfer',
+    minimum: 1,
+  })
   @IsInt()
   @Min(1)
   amount: number;
-
 }

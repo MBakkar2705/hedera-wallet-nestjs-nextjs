@@ -7,7 +7,6 @@ import { TokenEntity } from './entities/token.entity';
 import { AssociationEntity } from './entities/association.entity';
 import { TokenTransferEntity } from './entities/token-transfer.entity';
 
-
 //const HEDERA_CLIENT_PROVIDER = {
 //  provide: 'HEDERA_CLIENT',
 //  useFactory: () => {
@@ -19,9 +18,15 @@ import { TokenTransferEntity } from './entities/token-transfer.entity';
 //};
 
 @Module({
-  imports: [TypeOrmModule.forFeature([TokenEntity, AssociationEntity, TokenTransferEntity])],
+  imports: [
+    TypeOrmModule.forFeature([
+      TokenEntity,
+      AssociationEntity,
+      TokenTransferEntity,
+    ]),
+  ],
   controllers: [TokensController],
-//  providers: [HEDERA_CLIENT_PROVIDER, TokensService],
+  //  providers: [HEDERA_CLIENT_PROVIDER, TokensService],
   providers: [TokensService],
 })
 export class TokensModule {}

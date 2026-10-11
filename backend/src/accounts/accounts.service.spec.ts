@@ -80,7 +80,7 @@ describe('AccountsService', () => {
   let service: AccountsService;
 
   const mockRepo = {
-    create: jest.fn().mockImplementation(data => data),
+    create: jest.fn().mockImplementation((data) => data),
     save: jest.fn(),
   };
 
@@ -127,7 +127,7 @@ describe('AccountsService', () => {
       AccountCreateTransaction.mockImplementation(() => mockTransaction);
 
       await expect(service.createAccount(5)).rejects.toThrow(
-        'Account creation failed: receipt.accountId is null'
+        'Account creation failed: receipt.accountId is null',
       );
     });
   });
@@ -147,11 +147,13 @@ describe('AccountsService', () => {
       const { AccountInfoQuery } = require('@hashgraph/sdk');
       AccountInfoQuery.mockImplementation(() => ({
         setAccountId: jest.fn().mockReturnThis(),
-        execute: jest.fn().mockRejectedValue(new Error('Simulated SDK failure')),
+        execute: jest
+          .fn()
+          .mockRejectedValue(new Error('Simulated SDK failure')),
       }));
 
       await expect(service.getAccountInfo('0.0.invalid')).rejects.toThrow(
-        'Failed to fetch account info: Error: Simulated SDK failure'
+        'Failed to fetch account info: Error: Simulated SDK failure',
       );
     });
   });

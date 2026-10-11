@@ -37,7 +37,7 @@ describe('TopicsService', () => {
 
   const mockMessageRepo = {
     save: jest.fn(),
-    find : jest.fn(),
+    find: jest.fn(),
   };
 
   const mockClient = {}; // injected but unused directly
@@ -47,7 +47,10 @@ describe('TopicsService', () => {
       providers: [
         TopicsService,
         { provide: getRepositoryToken(TopicEntity), useValue: mockTopicRepo },
-        { provide: getRepositoryToken(MessageEntity), useValue: mockMessageRepo },
+        {
+          provide: getRepositoryToken(MessageEntity),
+          useValue: mockMessageRepo,
+        },
         { provide: 'HEDERA_CLIENT', useValue: mockClient },
       ],
     }).compile();
@@ -85,7 +88,7 @@ describe('TopicsService', () => {
       const dto = { memo: 'Empty memo' };
 
       await expect(service.createTopic(dto)).rejects.toThrow(
-        'Topic creation failed: no topicId returned by Hedera.'
+        'Topic creation failed: no topicId returned by Hedera.',
       );
     });
 
@@ -115,7 +118,6 @@ describe('TopicsService', () => {
         memo: undefined,
       });
     });
-
   });
 
   describe('sendMessage()', () => {
@@ -138,48 +140,47 @@ describe('TopicsService', () => {
           topicId: '0.0.567890',
           message: 'Hello Hedera',
           transactionId: 'tx-topic-123',
-        })
+        }),
       );
     });
   });
 
   describe('getMessages()', () => {
-  it('should return messages for a valid topicId', async () => {
-    const topicId = '0.0.567890';
-    const mockMessages = [
-      {
-        id: 1,
-        topicId,
-        message: 'Hello',
-        transactionId: 'tx-1',
-        createdAt: new Date(),
-      },
-      {
-        id: 2,
-        topicId,
-        message: 'World',
-        transactionId: 'tx-2',
-        createdAt: new Date(),
-      },
-    ];
+    it('should return messages for a valid topicId', async () => {
+      const topicId = '0.0.567890';
+      const mockMessages = [
+        {
+          id: 1,
+          topicId,
+          message: 'Hello',
+          transactionId: 'tx-1',
+          createdAt: new Date(),
+        },
+        {
+          id: 2,
+          topicId,
+          message: 'World',
+          transactionId: 'tx-2',
+          createdAt: new Date(),
+        },
+      ];
 
-    mockMessageRepo.find = jest.fn().mockResolvedValue(mockMessages);
+      mockMessageRepo.find = jest.fn().mockResolvedValue(mockMessages);
 
-    const result = await service.getMessages(topicId);
-    expect(result).toEqual(mockMessages);
-    expect(mockMessageRepo.find).toHaveBeenCalledWith({
-       where: { topicId },
-      order: { createdAt: 'ASC' }      
+      const result = await service.getMessages(topicId);
+      expect(result).toEqual(mockMessages);
+      expect(mockMessageRepo.find).toHaveBeenCalledWith({
+        where: { topicId },
+        order: { createdAt: 'ASC' },
+      });
+    });
+    it('should throw NotFoundException if no messages are found', async () => {
+      const topicId = '0.0.999999';
+      mockMessageRepo.find = jest.fn().mockResolvedValue([]);
+
+      await expect(service.getMessages(topicId)).rejects.toThrow(
+        `No messages found for topicId ${topicId}`,
+      );
     });
   });
-  it('should throw NotFoundException if no messages are found', async () => {
-    const topicId = '0.0.999999';
-    mockMessageRepo.find = jest.fn().mockResolvedValue([]);
-
-    await expect(service.getMessages(topicId)).rejects.toThrow(
-      `No messages found for topicId ${topicId}`
-    );
-  });
-});
-
 });

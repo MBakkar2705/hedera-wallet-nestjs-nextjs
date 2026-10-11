@@ -20,13 +20,13 @@ import { HederaModule } from './hedera/hedera.module';
       type: 'sqlite',
       database: 'hedera-wallet.db',
       autoLoadEntities: true,
-//      entities: [
-//        AccountEntity,
-//       TokenEntity,
-//        AssociationEntity,
-//        TopicEntity,
-//        MessageEntity
-//      ],
+      //      entities: [
+      //        AccountEntity,
+      //       TokenEntity,
+      //        AssociationEntity,
+      //        TopicEntity,
+      //        MessageEntity
+      //      ],
       synchronize: true,
     }),
     AccountsModule,
@@ -37,5 +37,4 @@ import { HederaModule } from './hedera/hedera.module';
   controllers: [AppController],
   providers: [AppService],
 })
-
 export class AppModule {}

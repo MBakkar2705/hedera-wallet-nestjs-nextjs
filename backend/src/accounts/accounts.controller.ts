@@ -2,7 +2,13 @@ import { Body, Controller, Post, Get, Param } from '@nestjs/common';
 import { AccountsService } from './accounts.service';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { TransferHbarDto } from './dto/transfer-hbar.dto';
-import { ApiTags, ApiBody, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiBody,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+} from '@nestjs/swagger';
 
 @ApiTags('accounts')
 @Controller('accounts')
@@ -22,11 +28,11 @@ export class AccountsController {
   @ApiParam({
     name: 'accountId',
     type: String,
-    description: 'Hedera account ID to retrieve info for'
+    description: 'Hedera account ID to retrieve info for',
   })
   @ApiResponse({
     status: 200,
-    description: 'Returns Hedera account info and balance'
+    description: 'Returns Hedera account info and balance',
   })
   getAccountInfo(@Param('accountId') id: string) {
     return this.accountsService.getAccountInfo(id);
@@ -37,10 +43,9 @@ export class AccountsController {
   @ApiBody({ type: TransferHbarDto })
   @ApiResponse({
     status: 200,
-    description: 'Transfers HBAR from source to destination account'
+    description: 'Transfers HBAR from source to destination account',
   })
   transfer(@Body() dto: TransferHbarDto) {
     return this.accountsService.transferHbar(dto);
   }
 }
-

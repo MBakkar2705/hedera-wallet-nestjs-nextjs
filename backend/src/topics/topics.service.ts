@@ -4,7 +4,12 @@ import { Repository } from 'typeorm';
 import { TopicEntity } from './entities/topic.entity';
 import { CreateTopicDto } from './dto/create-topic.dto/create-topic.dto';
 import { SendMessageDto } from './dto/send-message.dto/send-message.dto';
-import { Client, TopicId, TopicCreateTransaction, TopicMessageSubmitTransaction} from '@hashgraph/sdk';
+import {
+  Client,
+  TopicId,
+  TopicCreateTransaction,
+  TopicMessageSubmitTransaction,
+} from '@hashgraph/sdk';
 import { MessageEntity } from './entities/message.entity';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 
@@ -18,13 +23,18 @@ export class TopicsService {
     private readonly messageRepo: Repository<MessageEntity>,
 
     @Inject('HEDERA_CLIENT')
-    private readonly client: Client
+    private readonly client: Client,
   ) {}
 
   @ApiOperation({ summary: 'Create a new HCS topic on Hedera' })
   @ApiResponse({ status: 201, description: 'Topic successfully created' })
-  @ApiResponse({ status: 400, description: 'Topic creation failed: no topicId returned' })
-  async createTopic(dto: CreateTopicDto): Promise<{ topicId: string; memo?: string }> {
+  @ApiResponse({
+    status: 400,
+    description: 'Topic creation failed: no topicId returned',
+  })
+  async createTopic(
+    dto: CreateTopicDto,
+  ): Promise<{ topicId: string; memo?: string }> {
     const tx = new TopicCreateTransaction();
 
     if (dto.memo) {
@@ -46,9 +56,18 @@ export class TopicsService {
   }
 
   @ApiOperation({ summary: 'Submit a message to an existing HCS topic' })
-  @ApiResponse({ status: 201, description: 'Message successfully submitted and persisted' })
-  @ApiResponse({ status: 400, description: 'Message submission failed (invalid topic or Hedera error)' })
-  async sendMessage(topicId: string, dto: SendMessageDto): Promise<{
+  @ApiResponse({
+    status: 201,
+    description: 'Message successfully submitted and persisted',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Message submission failed (invalid topic or Hedera error)',
+  })
+  async sendMessage(
+    topicId: string,
+    dto: SendMessageDto,
+  ): Promise<{
     topicId: string;
     message: string;
     transactionId: string;
@@ -68,23 +87,29 @@ export class TopicsService {
       topicId,
       message: dto.message,
       transactionId,
-      createdAt
+      createdAt,
     });
 
     return {
       topicId,
       message: dto.message,
       transactionId,
-      createdAt
+      createdAt,
     };
   }
   @ApiOperation({ summary: 'Retrieve all messages for a given HCS topic' })
-  @ApiResponse({ status: 200, description: 'Messages successfully retrieved from local persistence' })
-  @ApiResponse({ status: 404, description: 'No messages found for the given topicId' })
+  @ApiResponse({
+    status: 200,
+    description: 'Messages successfully retrieved from local persistence',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'No messages found for the given topicId',
+  })
   async getMessages(topicId: string): Promise<MessageEntity[]> {
     const messages = await this.messageRepo.find({
       where: { topicId },
-      order: { createdAt: 'ASC' }
+      order: { createdAt: 'ASC' },
     });
 
     if (!messages || messages.length === 0) {
@@ -93,5 +118,4 @@ export class TopicsService {
 
     return messages;
   }
-
 }
