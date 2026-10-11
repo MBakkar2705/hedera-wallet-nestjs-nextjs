@@ -1155,9 +1155,9 @@ docker build -f backend/Dockerfile -t hedera-wallet .
 Credentials are not included in the image (`.env` files are excluded by `.dockerignore`).
 Running the container requires the four variables described in [Environment Variables](#environment-variables), provided at runtime:
 
-docker run --rm -p 3000:3000 --env-file backend/.env hedera-wallet
+docker run --rm --init -p 3000:3000 --env-file backend/.env hedera-wallet
 
-Without these variables, the application exits at startup. Stop the container with `docker stop`: Ctrl+C in the terminal did not stop it (observed, cause not investigated).
+Without these variables, the application exits at startup. The `--init` option is needed for Ctrl+C to stop the container. Without it, Ctrl+C had no effect after about 30 seconds and `docker stop` took about 10 seconds; with it, Ctrl+C stopped the container in about 2 seconds (all observed). In the Nest log, the application is process 1 without `--init` and process 7 with it. The cause was not tested separately.
 
 The GitHub Actions workflow (.github/workflows/ci.yml) installs dependencies with pnpm, runs the backend tests (`pnpm test`), then the lint and the build of the frontend, on every push and pull request.
 
