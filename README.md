@@ -52,6 +52,8 @@ Backend:
 - @hashgraph/sdk (Hedera SDK)
 - SQLite (local data storage)
 - Jest (unit testing)
+- Supertest (end-to-end test)
+- ESLint 9 and Prettier (lint and format)
 - Swagger (API documentation)
 
 Frontend:
@@ -87,7 +89,9 @@ Frontend:
 | Frontend: topics screen                         | Done        |
 | Frontend: design (Tailwind, local components)   | Done        |
 | Backend and frontend in sibling folders         | Done        |
-| CI: backend tests, frontend lint and build      | Done        |
+| Backend lint and format (ESLint, Prettier)      | Done        |
+| Backend end-to-end test (supertest)             | Done        |
+| CI: backend tests, lint, format check and e2e; frontend lint and build | Done        |
 
 ---
 
@@ -647,6 +651,7 @@ hedera-wallet-nestjs-nextjs\
 │   ├── test/
 │   ├── Dockerfile
 │   ├── .env.example
+│   ├── .prettierrc
 │   ├── eslint.config.mjs
 │   ├── jest.config.js
 │   ├── nest-cli.json
@@ -837,6 +842,18 @@ pnpm run test:cov   // Runs all tests and generates coverage report
 
 The coverage report includes detailed metrics per file, function, branch, and line.
 It is stored in the `coverage` folder of `backend/` (the Jest default, `coverage/lcov-report/index.html`) after execution.
+
+Lint, format and end-to-end commands (from the repository root; the CI runs them with `pnpm --filter backend`):
+
+pnpm --filter backend lint          // ESLint on backend/src and backend/test
+
+pnpm --filter backend format:check  // Prettier check, no file modified
+
+pnpm --filter backend format        // Prettier rewrites the files
+
+pnpm --filter backend test:e2e      // End-to-end test
+
+The end-to-end test is `backend/test/app.e2e-spec.ts`. It starts the application module and checks the response of `GET /`. It sets throwaway Hedera credentials itself (a key generated at each run), so no `.env` file is needed to run it. The application still opens the local `hedera-wallet.db`. The Hedera clients are closed when the application closes: without that, Jest did not exit (observed).
 
 There is no frontend test script yet. The frontend is checked by `pnpm --filter frontend lint`, `pnpm --filter frontend build` and by hand in a browser. The CI runs the lint and the build.
 
@@ -1159,7 +1176,7 @@ docker run --rm --init -p 3000:3000 --env-file backend/.env hedera-wallet
 
 Without these variables, the application exits at startup. The `--init` option is needed for Ctrl+C to stop the container. Without it, Ctrl+C had no effect after about 30 seconds and `docker stop` took about 10 seconds; with it, Ctrl+C stopped the container in about 2 seconds (all observed). In the Nest log, the application is process 1 without `--init` and process 7 with it. The cause was not tested separately.
 
-The GitHub Actions workflow (.github/workflows/ci.yml) installs dependencies with pnpm, runs the backend tests (`pnpm test`), then the lint and the build of the frontend, on every push and pull request.
+The GitHub Actions workflow (.github/workflows/ci.yml) installs dependencies with pnpm, runs the backend tests (`pnpm test`), the backend lint, the backend format check and the backend end-to-end test, then the lint and the build of the frontend, on every push and pull request.
 
 ---
 
