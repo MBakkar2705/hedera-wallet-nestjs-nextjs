@@ -1,7 +1,8 @@
 # ADR 0006: Continuous integration with GitHub Actions
 
-- Status: Accepted
+- Status: Accepted (the steps amended by the note of 2026-10-11)
 - Date: 2026-10-09
+- Note (2026-10-11): `.github/workflows/ci.yml` now also runs, after `pnpm test`, the backend lint (`pnpm --filter backend lint`), the backend format check (`pnpm --filter backend format:check`) and the backend end-to-end test (`pnpm --filter backend test:e2e`). The author asked for this change explicitly, naming the file (see the note of 2026-10-10 in ADR 0004). The criterion "No secrets" still holds, because the end-to-end test generates throwaway Hedera credentials (ADR 0013). The CI was green with these steps on commit `24ade28` and on the commits after it (reported by the author). In "Decision", the list of steps and the count "six steps" are no longer current. In "Consequences", the second and third items are no longer current for the backend lint and the end-to-end test, and the Docker build is still not in the CI. In "Not proven", the last item is no longer current for the backend lint and the end-to-end test. The fourth item of "Consequences" is amended by ADR 0004: the assistant edits this file only at the explicit request of the author.
 
 ## Context
 
