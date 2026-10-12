@@ -19,6 +19,7 @@ export class AccountsController {
   @ApiOperation({ summary: 'Create a new Hedera account on testnet' })
   @ApiBody({ type: CreateAccountDto })
   @ApiResponse({ status: 200, description: 'Account successfully created' })
+  @ApiResponse({ status: 400, description: 'Invalid request body' })
   create(@Body() { initialBalance }: CreateAccountDto) {
     return this.accountsService.createAccount(initialBalance);
   }

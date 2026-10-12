@@ -323,6 +323,8 @@ Outcome:
 The transaction was finalized on the Hedera testnet and logged in the TransferEntity table in hedera-wallet.db
 It can be inspected via VS Code SQLite Viewer in the transfer_entity table
 
+Invalid request: a body that fails the validation, for example `{}`, returns HTTP 400 with the list of the invalid fields (observed with curl on 2026-10-12: five messages, including "amount must not be less than 1"). Before, the same request returned HTTP 500. The validation is applied by a global ValidationPipe, see [ADR 0014](docs/adr/0014-global-filter-for-hedera-errors.md).
+
 ---
 
 ### Step 6 Token Creation (POST /tokens)
@@ -856,7 +858,7 @@ pnpm --filter backend format        // Prettier rewrites the files
 
 pnpm --filter backend test:e2e      // End-to-end test
 
-The end-to-end test is `backend/test/app.e2e-spec.ts`. It starts the application module and checks the response of `GET /`. It sets throwaway Hedera credentials itself (a key generated at each run), so no `.env` file is needed to run it. The application still opens the local `hedera-wallet.db`. The Hedera clients are closed when the application closes: without that, Jest did not exit (observed).
+The end-to-end test is `backend/test/app.e2e-spec.ts`. It starts the application module, checks the response of `GET /`, and checks that two invalid request bodies are refused with a 400 (the body is checked before any call to Hedera). It sets throwaway Hedera credentials itself (a key generated at each run), so no `.env` file is needed to run it. The application still opens the local `hedera-wallet.db`. The Hedera clients are closed when the application closes: without that, Jest did not exit (observed).
 
 There is no frontend test script yet. The frontend is checked by `pnpm --filter frontend lint`, `pnpm --filter frontend build` and by hand in a browser. The CI runs the lint and the build.
 
@@ -1153,7 +1155,7 @@ The following endpoints — POST /topics, POST /topics/:topicId/messages and GET
 	- 400: validation errors or SDK exceptions (e.g. invalid topicId)
 
 - DTOs annotated with @ApiProperty() for Swagger schema generation
-- Combined with class-validator decorators (@IsString(), @IsOptional()) for payload enforcement
+- Combined with class-validator decorators (@IsString(), @IsOptional()) for payload enforcement, applied by a global ValidationPipe (see the note of 2026-10-12 in [ADR 0014](docs/adr/0014-global-filter-for-hedera-errors.md))
 
 All returned responses expose consistent fields:
 

@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IsNumber, Min } from 'class-validator';
 
 export class CreateAccountDto {
   @ApiProperty({
@@ -7,5 +8,7 @@ export class CreateAccountDto {
     minimum: 0,
     type: Number,
   })
+  @IsNumber()
+  @Min(0)
   initialBalance: number;
 }

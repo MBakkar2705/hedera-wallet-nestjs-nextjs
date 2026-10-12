@@ -1,7 +1,8 @@
 # ADR 0014: A global filter that turns Hedera errors into HTTP responses
 
-- Status: Accepted
+- Status: Accepted (the validation of the request body added by the note of 2026-10-12)
 - Date: 2026-10-11
+- Note (2026-10-12): The validation of the request body, which this decision leaves out (last item of "Consequences"), was added in the same lot with a global `ValidationPipe` registered with `APP_PIPE` in `AppModule`. The decorators of `CreateAccountDto`, which had none, were added (`@IsNumber()` and `@Min(0)`). Observed by the author: `POST /accounts/transfer` with the body `{}` answers HTTP 400 with the five invalid fields (before the pipe: HTTP 500, fourth case of "Context"), so the filter of this decision leaves this error unchanged. From the frontend, with the pipe active, the creation of an account with 10 HBAR and a transfer of 2 HBAR both succeeded. A transfer signed with a key that did not match the account ID (a typing error on the ID) showed `Hedera rejected the request: INVALID_SIGNATURE` on the transfer page, a status not seen before on the running application. The last item of "Consequences" is no longer current. The routes of the tokens and the topics were not tested with the pipe active.
 
 ## Context
 
