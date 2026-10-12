@@ -265,7 +265,7 @@ Outcome:
 
 The account information for 0.0.10936687 was successfully retrieved.
 The HBAR balance reflects the latest state on the Hedera testnet
-An unknown account ID returns HTTP 500 with the message "Internal server error": getAccountInfo wraps every SDK error in a plain Error, so the API does not return a 404.
+An unknown account ID returns HTTP 404 (`{"message":"Hedera does not know this account (INVALID_ACCOUNT_ID)","error":"Not Found","statusCode":404}`) and a malformed ID such as `abc` returns HTTP 400 (`failed to parse entity id: abc`). Both were observed with curl, see [ADR 0014](docs/adr/0014-global-filter-for-hedera-errors.md). Before that change, both returned HTTP 500 with the message "Internal server error".
 
 This retrieval does not create a new row in SQLite, but can be cross-checked against existing entries in hedera-wallet.db
 
@@ -322,6 +322,8 @@ Outcome:
 1 HBAR was successfully transferred from account 0.0.10937780 to account 0.0.10937901. The values above are the ones displayed by the frontend transfer screen, and the balance of the recipient went from 1 to 2 HBAR.
 The transaction was finalized on the Hedera testnet and logged in the TransferEntity table in hedera-wallet.db
 It can be inspected via VS Code SQLite Viewer in the transfer_entity table
+
+Invalid request: a body that fails the validation, for example `{}`, returns HTTP 400 with the list of the invalid fields (observed with curl on 2026-10-12: five messages, including "amount must not be less than 1"). Before, the same request returned HTTP 500. The validation is applied by a global ValidationPipe, see [ADR 0014](docs/adr/0014-global-filter-for-hedera-errors.md).
 
 ---
 
@@ -594,7 +596,7 @@ Service logic:
 
 - Queries the local SQLite database via messageRepo.find({ where: { topicId } })
 
-- Throws a NotFoundException if no messages are found
+- Returns an empty list (HTTP 200) when no message is stored for the topicId. The messages are read from the local database only, so a topic ID that is unknown or malformed gives an empty list too
 
 - Returns an array of persisted MessageEntity objects
 
@@ -629,6 +631,8 @@ Sample response :
 Outcome:
 
 Messages previously submitted to Hedera topic 0.0.6850099 were successfully retrieved from the message_entity table in the SQLite database (hedera-wallet.db). This confirms both persistence and retrievability via public API.
+
+Empty result: for a topic ID with no stored message (for example 0.0.9999999), the endpoint returns HTTP 200 with `[]`. This was observed with curl on 2026-10-12, and on the /topics page of the frontend, which shows "0 messages" and a short text. Before this change, the same request returned HTTP 500 with the message "Internal server error", and the page showed an error.
 
 ---
 
@@ -854,7 +858,7 @@ pnpm --filter backend format        // Prettier rewrites the files
 
 pnpm --filter backend test:e2e      // End-to-end test
 
-The end-to-end test is `backend/test/app.e2e-spec.ts`. It starts the application module and checks the response of `GET /`. It sets throwaway Hedera credentials itself (a key generated at each run), so no `.env` file is needed to run it. The application still opens the local `hedera-wallet.db`. The Hedera clients are closed when the application closes: without that, Jest did not exit (observed).
+The end-to-end test is `backend/test/app.e2e-spec.ts`. It starts the application module, checks the response of `GET /`, and checks that two invalid request bodies are refused with a 400 (the body is checked before any call to Hedera). It sets throwaway Hedera credentials itself (a key generated at each run), so no `.env` file is needed to run it. The application still opens the local `hedera-wallet.db`. The Hedera clients are closed when the application closes: without that, Jest did not exit (observed).
 
 There is no frontend test script yet. The frontend is checked by `pnpm --filter frontend lint`, `pnpm --filter frontend build` and by hand in a browser. The CI runs the lint and the build.
 
@@ -980,7 +984,7 @@ Error coverage:
 
 - sendMessage() simulates message delivery and persistence with mocked receipt
 
-- getMessages() throws if no messages are found → tested with empty result
+- getMessages() returns an empty list if no message is found → tested with empty result
 
 Execution:
 
@@ -995,6 +999,18 @@ Coverage:
 Jest reports full execution of topics.service.ts:
 100% statements, 100% functions, 100% lines, and 100% branches.
 All conditional paths, including memo injection and error handling, are explicitly covered. The service logic is stable, predictable, and thoroughly validated in isolation
+
+### Unit Testing – HederaExceptionFilter
+
+This suite starts a small Nest application whose routes only throw an error, and sends real HTTP requests to it. The Hedera error is a real `PrecheckStatusError` of the SDK. It checks that `INVALID_ACCOUNT_ID` gives 404, that `INSUFFICIENT_PAYER_BALANCE` and another Hedera status give 400, that a malformed ID gives 400, that an `HttpException` is unchanged and that an unexpected error stays a 500 without its message.
+
+Execution:
+
+pnpm run test
+
+Outcome:
+
+5 suites and 26 tests passed (reported by the author). See [ADR 0014](docs/adr/0014-global-filter-for-hedera-errors.md).
 
 ---
 
@@ -1131,17 +1147,15 @@ The following endpoints — POST /topics, POST /topics/:topicId/messages and GET
 	- CreateTopicDto (optional memo field)
 	- SendMessageDto (required message field)
 	- @ApiParam('topicId') for dynamic path
-  - @ApiQuery('limit') for optional pagination in GET requests
 
 - @ApiResponse() annotations aligned per route:
 
 	- 200: success for message retrieval
   - 201: success for topic creation and message submission
 	- 400: validation errors or SDK exceptions (e.g. invalid topicId)
-  - 404: topic not found (GET only)
 
 - DTOs annotated with @ApiProperty() for Swagger schema generation
-- Combined with class-validator decorators (@IsString(), @IsOptional()) for payload enforcement
+- Combined with class-validator decorators (@IsString(), @IsOptional()) for payload enforcement, applied by a global ValidationPipe (see the note of 2026-10-12 in [ADR 0014](docs/adr/0014-global-filter-for-hedera-errors.md))
 
 All returned responses expose consistent fields:
 
@@ -1188,6 +1202,7 @@ The backend evolutions listed in [docs/backend-evolutions.md](docs/backend-evolu
 | Lot               | What it changes                                                                                                                                                 | Items  | ADR                    |
 |-------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|--------|------------------------|
 | Rules and tooling | Rules for the AI assistant, backend lint and Prettier format check, runnable end-to-end test, Hedera clients closed at shutdown, CI steps, `docker run --init` | 11, 15 | 0004, 0005, 0006, 0013 |
+| Error handling    | Hedera errors become 404 and 400 through a global filter, empty topic answers 200, request bodies validated by a global ValidationPipe | 1, 2, 13, 20 | 0014 |
 
 ---
 
@@ -1218,6 +1233,7 @@ The records are numbered in the order of the project: first the backend, then th
 **Backend evolutions**
 
 - [ADR 0013: Backend lint, format and end-to-end checks](docs/adr/0013-backend-lint-format-and-e2e-checks.md)
+- [ADR 0014: A global filter that turns Hedera errors into HTTP responses](docs/adr/0014-global-filter-for-hedera-errors.md)
 
 The records were renumbered to follow this order. Earlier commit messages use the former numbers: former 0001 is now 0009, 0002 is 0008, 0003 is 0007, 0005 is 0010, 0006 is 0011 and 0007 is 0012. The former 0008 to 0012 were never committed under those numbers. ADR 0004 keeps its number.
 

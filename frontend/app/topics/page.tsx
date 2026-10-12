@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { ApiError, getErrorMessage } from "@/lib/api";
+import { getErrorMessage } from "@/lib/api";
 import {
   createTopic,
   getMessages,
@@ -48,13 +48,7 @@ export default function TopicsPage() {
       setMessages(await getMessages(topicId));
       setLoadedTopicId(topicId);
     } catch (caught) {
-      const text = getErrorMessage(caught);
-      // The backend answers 500 when a topic has no message yet.
-      setReadError(
-        caught instanceof ApiError && caught.status === 500
-          ? `${text.replace(/\.$/, "")}. The backend also returns this error when a topic has no message yet.`
-          : text,
-      );
+      setReadError(getErrorMessage(caught));
     } finally {
       setLoading(false);
     }
@@ -228,6 +222,12 @@ export default function TopicsPage() {
                 Topic <span className="font-mono">{loadedTopicId}</span>:{" "}
                 {messages.length} {messages.length === 1 ? "message" : "messages"}
               </p>
+              {messages.length === 0 && (
+                <p className="text-sm text-muted">
+                  No message is stored for this topic. Only the messages
+                  published through this application appear here.
+                </p>
+              )}
               <ul className="flex flex-col gap-3">
                 {messages.map((item) => (
                   <li

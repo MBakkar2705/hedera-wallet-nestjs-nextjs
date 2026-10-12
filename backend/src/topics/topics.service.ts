@@ -100,22 +100,14 @@ export class TopicsService {
   @ApiOperation({ summary: 'Retrieve all messages for a given HCS topic' })
   @ApiResponse({
     status: 200,
-    description: 'Messages successfully retrieved from local persistence',
+    description:
+      'Messages retrieved from local persistence (an empty list when the topic has no message)',
   })
-  @ApiResponse({
-    status: 404,
-    description: 'No messages found for the given topicId',
-  })
-  async getMessages(topicId: string): Promise<MessageEntity[]> {
-    const messages = await this.messageRepo.find({
+  getMessages(topicId: string): Promise<MessageEntity[]> {
+    // A topic without message gives an empty list, not an error.
+    return this.messageRepo.find({
       where: { topicId },
       order: { createdAt: 'ASC' },
     });
-
-    if (!messages || messages.length === 0) {
-      throw new Error(`No messages found for topicId ${topicId}`);
-    }
-
-    return messages;
   }
 }

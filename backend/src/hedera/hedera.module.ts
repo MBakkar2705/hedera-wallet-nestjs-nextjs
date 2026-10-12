@@ -1,5 +1,7 @@
 import { Global, Inject, Module, OnModuleDestroy } from '@nestjs/common';
+import { APP_FILTER } from '@nestjs/core';
 import { Client } from '@hashgraph/sdk';
+import { HederaExceptionFilter } from './hedera-exception.filter';
 
 @Global()
 @Module({
@@ -12,6 +14,8 @@ import { Client } from '@hashgraph/sdk';
           process.env.OPERATOR_KEY!,
         ),
     },
+    // Turns Hedera errors into 404/400 responses, for every route.
+    { provide: APP_FILTER, useClass: HederaExceptionFilter },
   ],
   exports: ['HEDERA_CLIENT'],
 })

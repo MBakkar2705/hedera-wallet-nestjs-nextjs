@@ -36,4 +36,25 @@ describe('AppController (e2e)', () => {
       .expect(200)
       .expect('Welcome to Hedera Wallet API by M. Bakkar!');
   });
+
+  // The body is checked before any call to Hedera, so these tests need no network.
+  it('/accounts/transfer (POST) rejects an empty body with 400', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/accounts/transfer')
+      .send({});
+
+    expect(response.status).toBe(400);
+    const body = response.body as { message: string[] };
+    expect(body.message).toContain('fromAccountId must be a string');
+  });
+
+  it('/accounts (POST) rejects a negative initial balance with 400', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/accounts')
+      .send({ initialBalance: -1 });
+
+    expect(response.status).toBe(400);
+    const body = response.body as { message: string[] };
+    expect(body.message).toContain('initialBalance must not be less than 0');
+  });
 });

@@ -19,6 +19,7 @@ export class AccountsController {
   @ApiOperation({ summary: 'Create a new Hedera account on testnet' })
   @ApiBody({ type: CreateAccountDto })
   @ApiResponse({ status: 200, description: 'Account successfully created' })
+  @ApiResponse({ status: 400, description: 'Invalid request body' })
   create(@Body() { initialBalance }: CreateAccountDto) {
     return this.accountsService.createAccount(initialBalance);
   }
@@ -34,6 +35,8 @@ export class AccountsController {
     status: 200,
     description: 'Returns Hedera account info and balance',
   })
+  @ApiResponse({ status: 400, description: 'Malformed account ID' })
+  @ApiResponse({ status: 404, description: 'Unknown account ID' })
   getAccountInfo(@Param('accountId') id: string) {
     return this.accountsService.getAccountInfo(id);
   }
@@ -44,6 +47,11 @@ export class AccountsController {
   @ApiResponse({
     status: 200,
     description: 'Transfers HBAR from source to destination account',
+  })
+  @ApiResponse({
+    status: 400,
+    description:
+      'Hedera rejected the transfer (for example insufficient balance) or an ID is malformed',
   })
   transfer(@Body() dto: TransferHbarDto) {
     return this.accountsService.transferHbar(dto);

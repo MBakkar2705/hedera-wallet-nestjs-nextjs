@@ -48,11 +48,8 @@ export class TopicsController {
   @ApiParam({ name: 'topicId', required: true, description: 'Hedera topic ID' })
   @ApiResponse({
     status: 200,
-    description: 'Messages successfully retrieved from local persistence',
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'No messages found for the given topicId',
+    description:
+      'Messages retrieved from local persistence (an empty list when the topic has no message)',
   })
   @Get(':topicId/messages')
   getMessages(@Param('topicId') topicId: string): Promise<MessageEntity[]> {
