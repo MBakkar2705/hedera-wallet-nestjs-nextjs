@@ -174,13 +174,13 @@ describe('TopicsService', () => {
         order: { createdAt: 'ASC' },
       });
     });
-    it('should throw NotFoundException if no messages are found', async () => {
+    it('should return an empty list when the topic has no message', async () => {
       const topicId = '0.0.999999';
       mockMessageRepo.find = jest.fn().mockResolvedValue([]);
 
-      await expect(service.getMessages(topicId)).rejects.toThrow(
-        `No messages found for topicId ${topicId}`,
-      );
+      const result = await service.getMessages(topicId);
+
+      expect(result).toEqual([]);
     });
   });
 });

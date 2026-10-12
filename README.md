@@ -594,7 +594,7 @@ Service logic:
 
 - Queries the local SQLite database via messageRepo.find({ where: { topicId } })
 
-- Throws a NotFoundException if no messages are found
+- Returns an empty list (HTTP 200) when no message is stored for the topicId. The messages are read from the local database only, so a topic ID that is unknown or malformed gives an empty list too
 
 - Returns an array of persisted MessageEntity objects
 
@@ -629,6 +629,8 @@ Sample response :
 Outcome:
 
 Messages previously submitted to Hedera topic 0.0.6850099 were successfully retrieved from the message_entity table in the SQLite database (hedera-wallet.db). This confirms both persistence and retrievability via public API.
+
+Empty result: for a topic ID with no stored message (for example 0.0.9999999), the endpoint returns HTTP 200 with `[]`. This was observed with curl on 2026-10-12, and on the /topics page of the frontend, which shows "0 messages" and a short text. Before this change, the same request returned HTTP 500 with the message "Internal server error", and the page showed an error.
 
 ---
 
@@ -980,7 +982,7 @@ Error coverage:
 
 - sendMessage() simulates message delivery and persistence with mocked receipt
 
-- getMessages() throws if no messages are found → tested with empty result
+- getMessages() returns an empty list if no message is found → tested with empty result
 
 Execution:
 
@@ -1143,14 +1145,12 @@ The following endpoints — POST /topics, POST /topics/:topicId/messages and GET
 	- CreateTopicDto (optional memo field)
 	- SendMessageDto (required message field)
 	- @ApiParam('topicId') for dynamic path
-  - @ApiQuery('limit') for optional pagination in GET requests
 
 - @ApiResponse() annotations aligned per route:
 
 	- 200: success for message retrieval
   - 201: success for topic creation and message submission
 	- 400: validation errors or SDK exceptions (e.g. invalid topicId)
-  - 404: topic not found (GET only)
 
 - DTOs annotated with @ApiProperty() for Swagger schema generation
 - Combined with class-validator decorators (@IsString(), @IsOptional()) for payload enforcement
