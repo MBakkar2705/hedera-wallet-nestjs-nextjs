@@ -1202,6 +1202,7 @@ The backend evolutions listed in [docs/backend-evolutions.md](docs/backend-evolu
 | Lot               | What it changes                                                                                                                                                 | Items  | ADR                    |
 |-------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|--------|------------------------|
 | Rules and tooling | Rules for the AI assistant, backend lint and Prettier format check, runnable end-to-end test, Hedera clients closed at shutdown, CI steps, `docker run --init` | 11, 15 | 0004, 0005, 0006, 0013 |
+| Error handling    | Hedera errors become 404 and 400 through a global filter, empty topic answers 200, request bodies validated by a global ValidationPipe | 1, 2, 13, 20 | 0014 |
 
 ---
 
