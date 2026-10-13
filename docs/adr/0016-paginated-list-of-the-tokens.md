@@ -2,6 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-10-13
+- Note (2026-10-13): The last item of "Not proven" (the CI with this change) is no longer current: the CI ran green on the commit of this decision (reported by the author).
 
 ## Context
 
