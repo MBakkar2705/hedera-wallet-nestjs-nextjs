@@ -821,6 +821,13 @@ copy backend\.env.example backend\.env
 
 Both pairs can hold the same testnet account. The application exits at startup if `OPERATOR_ID`, `OPERATOR_KEY` or `HEDERA_PRIVATE_KEY` is missing. Use a testnet account only. See [ADR 0007](docs/adr/0007-environment-variables.md).
 
+Two optional variables have a default and can be added to the same `.env` file:
+
+- `CORS_ORIGIN`: the one origin allowed to call the API from a browser. Default: `http://localhost:3001`. An empty value gives the default.
+- `PORT`: the port the API listens on. Default: `3000`. A value that is not an integer between 1 and 65535 stops the application at startup with `Invalid PORT "..."`.
+
+Observed (2026-10-13): with `PORT=3005`, Swagger answered on `http://localhost:3005/api`; with `PORT=abc`, the backend printed `Invalid PORT "abc": expected an integer between 1 and 65535` and stopped. The frontend reads the API address from `NEXT_PUBLIC_API_URL` (`frontend/lib/api.ts`, default `http://localhost:3000`): it has to be set if `PORT` is changed. That was not tested.
+
 ---
 
 ## Frontend
@@ -843,7 +850,7 @@ pnpm --filter frontend dev
 
 The frontend runs on http://localhost:3001 and the backend on http://localhost:3000.
 
-CORS: the backend allows a single origin, http://localhost:3001 (`backend/src/main.ts`). This was checked with curl and from the accounts page in a browser: the browser sent a preflight request (204) before the POST (201).
+CORS: the backend allows a single origin, read from `CORS_ORIGIN` (default http://localhost:3001; read in `backend/src/config.ts`, applied by `backend/src/cors.ts`, called from `backend/src/main.ts`). The server puts that origin in `Access-Control-Allow-Origin` also when the request comes from another origin: it does not refuse the request, the browser blocks the page from reading the answer. Observed (2026-10-13): with curl, `Origin: http://other.example` got `Access-Control-Allow-Origin: http://localhost:3001`; with `CORS_ORIGIN=http://localhost:3002`, the accounts page on http://localhost:3001 showed "Cannot reach the API" and the browser console reported `blocked by CORS policy: The 'Access-Control-Allow-Origin' header has a value 'http://localhost:3002' that is not equal to the supplied origin`; with the default origin, the account lookup works from the frontend. Checked earlier, before the variable existed: the browser sent a preflight request (204) before the POST (201) from the accounts page. The end-to-end test checks the header and a preflight request answered with 204.
 
 Private keys: some endpoints take a private key in the request body (Hedera testnet demo only). The frontend keeps keys in page memory only: never in localStorage, sessionStorage, cookies, URLs or logs. Signing with a wallet instead of sending a key is a possible evolution, not implemented: it would require changes in the backend (`backend/src/`) and in its tests. See [ADR 0009](docs/adr/0009-private-keys-in-the-frontend.md) and [ADR 0010](docs/adr/0010-active-account-in-memory.md).
 
@@ -911,7 +918,7 @@ pnpm --filter backend format        // Prettier rewrites the files
 
 pnpm --filter backend test:e2e      // End-to-end test
 
-The end-to-end test is `backend/test/app.e2e-spec.ts`. It starts the application module, checks the response of `GET /`, and checks that two invalid request bodies and one invalid query (`GET /tokens?limit=500`) are refused with a 400 (the body or the query is checked before any call to Hedera). It sets throwaway Hedera credentials itself (a key generated at each run), so no `.env` file is needed to run it. The application still opens the local `hedera-wallet.db`. The Hedera clients are closed when the application closes: without that, Jest did not exit (observed).
+The end-to-end test is `backend/test/app.e2e-spec.ts`. It starts the application module, checks the response of `GET /`, checks the CORS header and a preflight request, and checks that two invalid request bodies and one invalid query (`GET /tokens?limit=500`) are refused with a 400 (the body or the query is checked before any call to Hedera). It sets throwaway Hedera credentials itself (a key generated at each run), so no `.env` file is needed to run it. The application still opens the local `hedera-wallet.db`. The Hedera clients are closed when the application closes: without that, Jest did not exit (observed).
 
 There is no frontend test script yet. The frontend is checked by `pnpm --filter frontend lint`, `pnpm --filter frontend build` and by hand in a browser. The CI runs the lint and the build.
 

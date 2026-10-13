@@ -4,6 +4,7 @@ import * as request from 'supertest';
 import { App } from 'supertest/types';
 import { PrivateKey } from '@hashgraph/sdk';
 import { AppModule } from './../src/app.module';
+import { enableAppCors } from './../src/cors';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
@@ -15,6 +16,8 @@ describe('AppController (e2e)', () => {
     process.env.OPERATOR_KEY = key;
     process.env.HEDERA_ACCOUNT_ID = '0.0.1';
     process.env.HEDERA_PRIVATE_KEY = key;
+    // Fixed here so the CORS tests do not depend on the shell environment.
+    process.env.CORS_ORIGIN = 'http://localhost:3001';
   });
 
   beforeEach(async () => {
@@ -23,6 +26,7 @@ describe('AppController (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    enableAppCors(app);
     await app.init();
   });
 
@@ -35,6 +39,34 @@ describe('AppController (e2e)', () => {
       .get('/')
       .expect(200)
       .expect('Welcome to Hedera Wallet API by M. Bakkar!');
+  });
+
+  it('/ (GET) sends the configured CORS origin, and never another one', async () => {
+    const allowed = await request(app.getHttpServer())
+      .get('/')
+      .set('Origin', 'http://localhost:3001');
+    expect(allowed.headers['access-control-allow-origin']).toBe(
+      'http://localhost:3001',
+    );
+
+    const other = await request(app.getHttpServer())
+      .get('/')
+      .set('Origin', 'http://other.example');
+    expect(other.headers['access-control-allow-origin']).not.toBe(
+      'http://other.example',
+    );
+  });
+
+  it('/accounts (OPTIONS) answers a preflight request with 204', async () => {
+    const response = await request(app.getHttpServer())
+      .options('/accounts')
+      .set('Origin', 'http://localhost:3001')
+      .set('Access-Control-Request-Method', 'POST');
+
+    expect(response.status).toBe(204);
+    expect(response.headers['access-control-allow-origin']).toBe(
+      'http://localhost:3001',
+    );
   });
 
   // The body is checked before any call to Hedera, so these tests need no network.
