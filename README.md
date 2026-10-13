@@ -1269,6 +1269,7 @@ The backend evolutions listed in [docs/backend-evolutions.md](docs/backend-evolu
 | Rules and tooling | Rules for the AI assistant, backend lint and Prettier format check, runnable end-to-end test, Hedera clients closed at shutdown, CI steps, `docker run --init` | 11, 15 | 0004, 0005, 0006, 0013 |
 | Error handling    | Hedera errors become 404 and 400 through a global filter, empty topic answers 200, request bodies validated by a global ValidationPipe | 1, 2, 13, 20 | 0014 |
 | Token responses   | Structured balances and token details next to the formatted fields of the account lookup, amount value and unit on transfers, paginated list of the tokens created by the backend | 3, 4, 5 | 0015, 0016 |
+| Configuration     | CORS origin, port and database path read from environment variables, one operator account and one shared Hedera client (the operator pays every operation, HBAR transfers included), end-to-end test isolated from the local database | 9, 10, 24 | 0017 |
 
 ---
 
