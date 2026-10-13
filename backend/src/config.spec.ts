@@ -1,7 +1,9 @@
 import {
   DEFAULT_CORS_ORIGIN,
+  DEFAULT_DATABASE_PATH,
   DEFAULT_PORT,
   getCorsOrigin,
+  getDatabasePath,
   getPort,
 } from './config';
 
@@ -9,11 +11,13 @@ describe('config', () => {
   const saved = {
     CORS_ORIGIN: process.env.CORS_ORIGIN,
     PORT: process.env.PORT,
+    DATABASE_PATH: process.env.DATABASE_PATH,
   };
 
   beforeEach(() => {
     delete process.env.CORS_ORIGIN;
     delete process.env.PORT;
+    delete process.env.DATABASE_PATH;
   });
 
   afterAll(() => {
@@ -39,6 +43,22 @@ describe('config', () => {
     it('returns CORS_ORIGIN when it is set', () => {
       process.env.CORS_ORIGIN = 'https://wallet.example.com';
       expect(getCorsOrigin()).toBe('https://wallet.example.com');
+    });
+  });
+
+  describe('getDatabasePath()', () => {
+    it('returns the default path when DATABASE_PATH is absent', () => {
+      expect(getDatabasePath()).toBe(DEFAULT_DATABASE_PATH);
+    });
+
+    it('returns the default path when DATABASE_PATH is empty', () => {
+      process.env.DATABASE_PATH = '';
+      expect(getDatabasePath()).toBe(DEFAULT_DATABASE_PATH);
+    });
+
+    it('returns DATABASE_PATH when it is set', () => {
+      process.env.DATABASE_PATH = '/tmp/other.db';
+      expect(getDatabasePath()).toBe('/tmp/other.db');
     });
   });
 

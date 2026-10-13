@@ -3,6 +3,7 @@ import { APP_PIPE } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { getDatabasePath } from './config';
 //import { AccountEntity } from './accounts/entities/account.entity';
 //import { TokenEntity } from './tokens/entities/token.entity';
 import { AccountsModule } from './accounts/accounts.module';
@@ -17,18 +18,21 @@ import { HederaModule } from './hedera/hedera.module';
 @Module({
   imports: [
     HederaModule,
-    TypeOrmModule.forRoot({
-      type: 'sqlite',
-      database: 'hedera-wallet.db',
-      autoLoadEntities: true,
-      //      entities: [
-      //        AccountEntity,
-      //       TokenEntity,
-      //        AssociationEntity,
-      //        TopicEntity,
-      //        MessageEntity
-      //      ],
-      synchronize: true,
+    // forRootAsync: the path is read when the application starts, not when this file is imported.
+    TypeOrmModule.forRootAsync({
+      useFactory: () => ({
+        type: 'sqlite',
+        database: getDatabasePath(),
+        autoLoadEntities: true,
+        //      entities: [
+        //        AccountEntity,
+        //       TokenEntity,
+        //        AssociationEntity,
+        //        TopicEntity,
+        //        MessageEntity
+        //      ],
+        synchronize: true,
+      }),
     }),
     AccountsModule,
     TokensModule,

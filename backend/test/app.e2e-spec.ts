@@ -1,5 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
 import * as request from 'supertest';
 import { App } from 'supertest/types';
 import { PrivateKey } from '@hashgraph/sdk';
@@ -8,6 +11,7 @@ import { enableAppCors } from './../src/cors';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
+  let tempDir: string;
 
   beforeAll(() => {
     // Throwaway credentials: no .env file needed, and nothing real is used.
@@ -18,6 +22,13 @@ describe('AppController (e2e)', () => {
     process.env.HEDERA_PRIVATE_KEY = key;
     // Fixed here so the CORS tests do not depend on the shell environment.
     process.env.CORS_ORIGIN = 'http://localhost:3001';
+    // A throwaway database file: the test never opens the real hedera-wallet.db.
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hedera-wallet-e2e-'));
+    process.env.DATABASE_PATH = path.join(tempDir, 'test.db');
+  });
+
+  afterAll(() => {
+    fs.rmSync(tempDir, { recursive: true, force: true });
   });
 
   beforeEach(async () => {
@@ -39,6 +50,10 @@ describe('AppController (e2e)', () => {
       .get('/')
       .expect(200)
       .expect('Welcome to Hedera Wallet API by M. Bakkar!');
+  });
+
+  it('uses the database file given by DATABASE_PATH', () => {
+    expect(fs.existsSync(process.env.DATABASE_PATH as string)).toBe(true);
   });
 
   it('/ (GET) sends the configured CORS origin, and never another one', async () => {

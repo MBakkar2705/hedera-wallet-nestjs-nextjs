@@ -3,10 +3,16 @@
 
 export const DEFAULT_CORS_ORIGIN = 'http://localhost:3001';
 export const DEFAULT_PORT = 3000;
+export const DEFAULT_DATABASE_PATH = 'hedera-wallet.db';
 
 // The one origin allowed to call the API from a browser. An empty value gives the default.
 export function getCorsOrigin(): string {
   return process.env.CORS_ORIGIN || DEFAULT_CORS_ORIGIN;
+}
+
+// The SQLite file. A relative path is relative to the folder the backend is started from.
+export function getDatabasePath(): string {
+  return process.env.DATABASE_PATH || DEFAULT_DATABASE_PATH;
 }
 
 // The port the API listens on. An absent or empty value gives the default.

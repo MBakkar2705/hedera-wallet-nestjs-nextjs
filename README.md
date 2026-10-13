@@ -733,7 +733,7 @@ hedera-wallet-nestjs-nextjs\
 ## Local Persistence (SQLite)
 
 This backend uses SQLite to persist Hedera-related entities locally.  
-The database file hedera-wallet.db is automatically created in the folder the backend is started from. The path in the code is relative (`database: 'hedera-wallet.db'`), so with `pnpm start` the file is `backend/hedera-wallet.db`.
+The database file hedera-wallet.db is automatically created in the folder the backend is started from. The path is read from the `DATABASE_PATH` variable (`backend/src/config.ts`) and defaults to the relative path `hedera-wallet.db`, so with `pnpm start` the file is `backend/hedera-wallet.db`.
 
 ---
 
@@ -825,8 +825,11 @@ Two optional variables have a default and can be added to the same `.env` file:
 
 - `CORS_ORIGIN`: the one origin allowed to call the API from a browser. Default: `http://localhost:3001`. An empty value gives the default.
 - `PORT`: the port the API listens on. Default: `3000`. A value that is not an integer between 1 and 65535 stops the application at startup with `Invalid PORT "..."`.
+- `DATABASE_PATH`: the SQLite file. Default: `hedera-wallet.db`, relative to the folder the backend is started from (`backend/` with `pnpm start`). An empty value gives the default.
 
 Observed (2026-10-13): with `PORT=3005`, Swagger answered on `http://localhost:3005/api`; with `PORT=abc`, the backend printed `Invalid PORT "abc": expected an integer between 1 and 65535` and stopped. The frontend reads the API address from `NEXT_PUBLIC_API_URL` (`frontend/lib/api.ts`, default `http://localhost:3000`): it has to be set if `PORT` is changed. That was not tested.
+
+Observed (2026-10-13): with the default `DATABASE_PATH`, the backend started and the Tokens page, which reads the tokens from the database, listed the 3 tokens created before. A value other than the default was used by the end-to-end test only, not on the running backend.
 
 ---
 
@@ -918,7 +921,7 @@ pnpm --filter backend format        // Prettier rewrites the files
 
 pnpm --filter backend test:e2e      // End-to-end test
 
-The end-to-end test is `backend/test/app.e2e-spec.ts`. It starts the application module, checks the response of `GET /`, checks the CORS header and a preflight request, and checks that two invalid request bodies and one invalid query (`GET /tokens?limit=500`) are refused with a 400 (the body or the query is checked before any call to Hedera). It sets throwaway Hedera credentials itself (a key generated at each run), so no `.env` file is needed to run it. The application still opens the local `hedera-wallet.db`. The Hedera clients are closed when the application closes: without that, Jest did not exit (observed).
+The end-to-end test is `backend/test/app.e2e-spec.ts`. It starts the application module, checks the response of `GET /`, checks the CORS header and a preflight request, and checks that two invalid request bodies and one invalid query (`GET /tokens?limit=500`) are refused with a 400 (the body or the query is checked before any call to Hedera). It sets throwaway Hedera credentials itself (a key generated at each run), so no `.env` file is needed to run it. It uses a throwaway database file in the temporary folder of the system (`DATABASE_PATH`, set at the start of the test and removed at the end; the removal was not checked by hand), so the test no longer opens `hedera-wallet.db`. Observed (2026-10-13): the last modification time of `backend/hedera-wallet.db` did not change after `pnpm test` and `pnpm --filter backend test:e2e`. The Hedera clients are closed when the application closes: without that, Jest did not exit (observed).
 
 There is no frontend test script yet. The frontend is checked by `pnpm --filter frontend lint`, `pnpm --filter frontend build` and by hand in a browser. The CI runs the lint and the build.
 
