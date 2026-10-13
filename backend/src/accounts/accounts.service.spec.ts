@@ -98,6 +98,9 @@ jest.mock('@hashgraph/sdk', () => {
 describe('AccountsService', () => {
   let service: AccountsService;
 
+  // Injected in place of the shared Hedera client; the SDK calls are mocked above.
+  const mockClient = {};
+
   const mockRepo = {
     create: jest.fn().mockImplementation((data) => data),
     save: jest.fn(),
@@ -107,6 +110,7 @@ describe('AccountsService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AccountsService,
+        { provide: 'HEDERA_CLIENT', useValue: mockClient },
         {
           provide: getRepositoryToken(AccountEntity),
           useValue: mockRepo,

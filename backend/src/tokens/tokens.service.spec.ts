@@ -29,13 +29,6 @@ jest.mock('@hashgraph/sdk', () => {
   });
 
   return {
-    Client: {
-      forTestnet: jest.fn().mockReturnValue({
-        setOperator: jest.fn(),
-        operatorAccountId: '0.0.operator',
-        operatorPublicKey: 'fake-public-key',
-      }),
-    },
     PrivateKey: {
       fromString: jest.fn().mockReturnValue('mocked-private-key'),
     },
@@ -81,14 +74,17 @@ describe('TokensService – full stable test', () => {
   const mockTokenRepo = { save: jest.fn(), findAndCount: jest.fn() };
   const mockAssocRepo = { save: jest.fn() };
   const mockTransferRepo = { save: jest.fn() };
+  // Injected in place of the shared Hedera client.
+  const mockClient = {
+    operatorAccountId: '0.0.operator',
+    operatorPublicKey: 'fake-public-key',
+  };
 
   beforeEach(async () => {
-    process.env.OPERATOR_ID = '0.0.operator';
-    process.env.OPERATOR_KEY = 'mocked-key';
-
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TokensService,
+        { provide: 'HEDERA_CLIENT', useValue: mockClient },
         { provide: getRepositoryToken(TokenEntity), useValue: mockTokenRepo },
         {
           provide: getRepositoryToken(AssociationEntity),
@@ -127,41 +123,17 @@ describe('TokensService – full stable test', () => {
     expect(mockTokenRepo.save).toHaveBeenCalledWith(result);
   });
 
-  it('should throw if operator credentials are missing', async () => {
-    delete process.env.OPERATOR_ID;
-    delete process.env.OPERATOR_KEY;
-
-    await expect(async () => {
-      const module: TestingModule = await Test.createTestingModule({
-        providers: [
-          TokensService,
-          { provide: getRepositoryToken(TokenEntity), useValue: mockTokenRepo },
-          {
-            provide: getRepositoryToken(AssociationEntity),
-            useValue: mockAssocRepo,
-          },
-          {
-            provide: getRepositoryToken(TokenTransferEntity),
-            useValue: mockTransferRepo,
-          },
-        ],
-      }).compile();
-
-      module.get<TokensService>(TokensService);
-    }).rejects.toThrow('Missing operator credentials in environment variables');
-  });
-
   it('should throw if operator accountId or publicKey is missing', async () => {
-    // Simule un client sans credentials internes
-    jest.mocked(require('@hashgraph/sdk').Client.forTestnet).mockReturnValue({
-      setOperator: jest.fn(),
+    // A client without operator account or public key
+    const brokenClient = {
       operatorAccountId: undefined,
       operatorPublicKey: undefined,
-    });
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TokensService,
+        { provide: 'HEDERA_CLIENT', useValue: brokenClient },
         { provide: getRepositoryToken(TokenEntity), useValue: mockTokenRepo },
         {
           provide: getRepositoryToken(AssociationEntity),
@@ -188,12 +160,6 @@ describe('TokensService – full stable test', () => {
   });
 
   it('should throw if tokenId is missing in the receipt', async () => {
-    jest.mocked(require('@hashgraph/sdk').Client.forTestnet).mockReturnValue({
-      setOperator: jest.fn(),
-      operatorAccountId: '0.0.operator',
-      operatorPublicKey: 'mocked-public-key',
-    });
-
     jest
       .mocked(require('@hashgraph/sdk').TokenCreateTransaction)
       .mockImplementation(() => ({
@@ -213,6 +179,7 @@ describe('TokensService – full stable test', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TokensService,
+        { provide: 'HEDERA_CLIENT', useValue: mockClient },
         { provide: getRepositoryToken(TokenEntity), useValue: mockTokenRepo },
         {
           provide: getRepositoryToken(AssociationEntity),
@@ -278,6 +245,7 @@ describe('TokensService – full stable test', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TokensService,
+        { provide: 'HEDERA_CLIENT', useValue: mockClient },
         { provide: getRepositoryToken(TokenEntity), useValue: mockTokenRepo },
         {
           provide: getRepositoryToken(AssociationEntity),
@@ -349,6 +317,7 @@ describe('TokensService – full stable test', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TokensService,
+        { provide: 'HEDERA_CLIENT', useValue: mockClient },
         { provide: getRepositoryToken(TokenEntity), useValue: mockTokenRepo },
         {
           provide: getRepositoryToken(AssociationEntity),

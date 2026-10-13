@@ -1,4 +1,4 @@
-import { Injectable, OnModuleDestroy } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -22,10 +22,11 @@ import { AssociationEntity } from './entities/association.entity';
 import { TokenTransferEntity } from './entities/token-transfer.entity';
 
 @Injectable()
-export class TokensService implements OnModuleDestroy {
-  private readonly client: Client;
-
+export class TokensService {
   constructor(
+    // The shared client is closed by HederaModule, not here.
+    @Inject('HEDERA_CLIENT') private readonly client: Client,
+
     @InjectRepository(TokenEntity)
     private readonly tokenRepo: Repository<TokenEntity>,
 
@@ -34,21 +35,7 @@ export class TokensService implements OnModuleDestroy {
 
     @InjectRepository(TokenTransferEntity)
     private readonly tokenTransferRepo: Repository<TokenTransferEntity>,
-  ) {
-    const operatorId = process.env.OPERATOR_ID;
-    const operatorKey = process.env.OPERATOR_KEY;
-
-    if (!operatorId || !operatorKey) {
-      throw new Error('Missing operator credentials in environment variables');
-    }
-
-    this.client = Client.forTestnet();
-    this.client.setOperator(operatorId, PrivateKey.fromString(operatorKey));
-  }
-
-  onModuleDestroy() {
-    this.client.close();
-  }
+  ) {}
 
   async createToken(dto: CreateTokenDto) {
     const { name, symbol, initialSupply } = dto;

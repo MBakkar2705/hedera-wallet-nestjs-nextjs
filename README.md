@@ -816,10 +816,9 @@ Credentials are read from a `.env` file in the `backend/` folder (`dotenv` reads
 
 copy backend\.env.example backend\.env
 
-- `OPERATOR_ID`, `OPERATOR_KEY`: read by the Hedera module and the tokens service.
-- `HEDERA_ACCOUNT_ID`, `HEDERA_PRIVATE_KEY`: read by the accounts service.
+- `HEDERA_ACCOUNT_ID`, `HEDERA_PRIVATE_KEY`: the operator account, which pays for what the backend sends on its own. They are read once, by `createHederaClient()` (`backend/src/hedera/hedera-client.ts`), and the client built from them is shared by the Hedera, accounts and tokens modules.
 
-Both pairs can hold the same testnet account. The application exits at startup if `OPERATOR_ID`, `OPERATOR_KEY` or `HEDERA_PRIVATE_KEY` is missing. Use a testnet account only. See [ADR 0007](docs/adr/0007-environment-variables.md).
+The application exits at startup, with `Missing environment variable(s): ...`, if one of the two is missing or empty. Observed (2026-10-13) with both absent; the cases with only one absent or with an empty value are covered by unit tests only. `OPERATOR_ID` and `OPERATOR_KEY`, read before [ADR 0017](docs/adr/0017-one-operator-account-and-one-shared-hedera-client.md), are no longer read: an older `.env` can keep them (the backend started with them present) or drop them (the backend started with them commented out); both observed. Use a testnet account only. See [ADR 0007](docs/adr/0007-environment-variables.md) and [ADR 0017](docs/adr/0017-one-operator-account-and-one-shared-hedera-client.md).
 
 Two optional variables have a default and can be added to the same `.env` file:
 
@@ -1251,7 +1250,7 @@ A multi-stage Dockerfile (`backend/Dockerfile`) builds a production image of the
 docker build -f backend/Dockerfile -t hedera-wallet .
 
 Credentials are not included in the image (`.env` files are excluded by `.dockerignore`).
-Running the container requires the four variables described in [Environment Variables](#environment-variables), provided at runtime:
+Running the container requires the two operator variables described in [Environment Variables](#environment-variables), provided at runtime:
 
 docker run --rm --init -p 3000:3000 --env-file backend/.env hedera-wallet
 
@@ -1303,6 +1302,7 @@ The records are numbered in the order of the project: first the backend, then th
 - [ADR 0014: A global filter that turns Hedera errors into HTTP responses](docs/adr/0014-global-filter-for-hedera-errors.md)
 - [ADR 0015: Structured amounts and token balances next to the formatted fields](docs/adr/0015-structured-amounts-and-token-balances.md)
 - [ADR 0016: A paginated list of the tokens created by the backend](docs/adr/0016-paginated-list-of-the-tokens.md)
+- [ADR 0017: One operator account in the environment and one shared Hedera client](docs/adr/0017-one-operator-account-and-one-shared-hedera-client.md)
 
 The records were renumbered to follow this order. Earlier commit messages use the former numbers: former 0001 is now 0009, 0002 is 0008, 0003 is 0007, 0005 is 0010, 0006 is 0011 and 0007 is 0012. The former 0008 to 0012 were never committed under those numbers. ADR 0004 keeps its number.
 

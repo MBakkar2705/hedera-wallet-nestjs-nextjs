@@ -16,8 +16,6 @@ describe('AppController (e2e)', () => {
   beforeAll(() => {
     // Throwaway credentials: no .env file needed, and nothing real is used.
     const key = PrivateKey.generateED25519().toStringDer();
-    process.env.OPERATOR_ID = '0.0.1';
-    process.env.OPERATOR_KEY = key;
     process.env.HEDERA_ACCOUNT_ID = '0.0.1';
     process.env.HEDERA_PRIVATE_KEY = key;
     // Fixed here so the CORS tests do not depend on the shell environment.

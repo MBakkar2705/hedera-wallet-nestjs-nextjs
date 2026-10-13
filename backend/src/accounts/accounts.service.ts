@@ -1,4 +1,4 @@
-import { Injectable, OnModuleDestroy } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AccountEntity } from './entities/account.entity';
@@ -18,23 +18,13 @@ import {
 } from '@hashgraph/sdk';
 
 @Injectable()
-export class AccountsService implements OnModuleDestroy {
-  private client: Client;
-
+export class AccountsService {
   constructor(
+    // The shared client is closed by HederaModule, not here.
+    @Inject('HEDERA_CLIENT') private readonly client: Client,
     @InjectRepository(AccountEntity)
     private readonly accountRepo: Repository<AccountEntity>,
-  ) {
-    const operatorId = process.env.HEDERA_ACCOUNT_ID!;
-    const operatorKey = PrivateKey.fromString(process.env.HEDERA_PRIVATE_KEY!);
-
-    this.client = Client.forTestnet();
-    this.client.setOperator(operatorId, operatorKey);
-  }
-
-  onModuleDestroy() {
-    this.client.close();
-  }
+  ) {}
 
   async createAccount(initialBalance: number): Promise<any> {
     const privateKey = PrivateKey.generate();
