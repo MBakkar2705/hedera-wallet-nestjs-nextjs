@@ -87,18 +87,18 @@ export class AccountsService {
     toAccountId,
     amount,
   }: TransferHbarDto) {
-    const client = Client.forTestnet();
-
     const senderId = AccountId.fromString(fromAccountId);
     const senderKey = PrivateKey.fromString(fromPrivateKey);
-    client.setOperator(senderId, senderKey);
 
-    const tx = await new TransferTransaction()
-      .addHbarTransfer(fromAccountId, new Hbar(-amount))
-      .addHbarTransfer(toAccountId, new Hbar(amount))
-      .execute(client);
+    // The shared client (the operator account) pays the fees, as for the tokens.
+    // The HBAR leave the sender's account, so the sender signs the transfer.
+    const transaction = new TransferTransaction()
+      .addHbarTransfer(senderId, new Hbar(-amount))
+      .addHbarTransfer(toAccountId, new Hbar(amount));
 
-    const receipt: TransactionReceipt = await tx.getReceipt(client);
+    const signedTx = await transaction.freezeWith(this.client).sign(senderKey);
+    const tx = await signedTx.execute(this.client);
+    const receipt: TransactionReceipt = await tx.getReceipt(this.client);
 
     return {
       status: receipt.status.toString(),

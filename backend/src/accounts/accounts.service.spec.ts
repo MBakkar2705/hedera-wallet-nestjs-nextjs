@@ -74,6 +74,8 @@ jest.mock('@hashgraph/sdk', () => {
     })),
     TransferTransaction: jest.fn().mockImplementation(() => ({
       addHbarTransfer: jest.fn().mockReturnThis(),
+      freezeWith: jest.fn().mockReturnThis(),
+      sign: jest.fn().mockReturnThis(),
       execute: jest.fn().mockResolvedValue({
         getReceipt: jest.fn().mockResolvedValue({
           status: { toString: () => 'SUCCESS' },
@@ -85,11 +87,6 @@ jest.mock('@hashgraph/sdk', () => {
     AccountId: {
       fromString: jest.fn().mockReturnValue({
         toString: () => '0.0.mocked-from',
-      }),
-    },
-    Client: {
-      forTestnet: jest.fn().mockReturnValue({
-        setOperator: jest.fn(),
       }),
     },
   };
@@ -204,6 +201,26 @@ describe('AccountsService', () => {
         value: 5,
         unit: 'HBAR',
       });
+    });
+
+    it('should send the transfer with the shared client and sign it with the key of the sender', async () => {
+      const sdk = require('@hashgraph/sdk');
+
+      await service.transferHbar({
+        fromAccountId: '0.0.mocked-from',
+        fromPrivateKey: 'mocked-private-key',
+        toAccountId: '0.0.to',
+        amount: 5,
+      });
+
+      const transaction = jest
+        .mocked(sdk.TransferTransaction)
+        .mock.results.at(-1)?.value;
+      expect(sdk.PrivateKey.fromString).toHaveBeenCalledWith(
+        'mocked-private-key',
+      );
+      expect(transaction.freezeWith).toHaveBeenCalledWith(mockClient);
+      expect(transaction.sign).toHaveBeenCalled();
     });
   });
 });

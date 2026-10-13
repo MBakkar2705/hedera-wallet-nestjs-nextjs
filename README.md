@@ -816,7 +816,7 @@ Credentials are read from a `.env` file in the `backend/` folder (`dotenv` reads
 
 copy backend\.env.example backend\.env
 
-- `HEDERA_ACCOUNT_ID`, `HEDERA_PRIVATE_KEY`: the operator account, which pays for what the backend sends on its own. They are read once, by `createHederaClient()` (`backend/src/hedera/hedera-client.ts`), and the client built from them is shared by the Hedera, accounts and tokens modules.
+- `HEDERA_ACCOUNT_ID`, `HEDERA_PRIVATE_KEY`: the operator account, which pays the fees of what the backend sends: from the code, the lookups, the creation of accounts and tokens, and the transfers of HBAR. Observed: the lookups cost the operator about 0.00113 ℏ each (earlier lot), and for a transfer of HBAR on 2026-10-13 the transaction ID started with the operator account and the sender lost exactly the amount sent. They are read once, by `createHederaClient()` (`backend/src/hedera/hedera-client.ts`), and the client built from them is shared by the Hedera, accounts and tokens modules.
 
 The application exits at startup, with `Missing environment variable(s): ...`, if one of the two is missing or empty. Observed (2026-10-13) with both absent; the cases with only one absent or with an empty value are covered by unit tests only. `OPERATOR_ID` and `OPERATOR_KEY`, read before [ADR 0017](docs/adr/0017-one-operator-account-and-one-shared-hedera-client.md), are no longer read: an older `.env` can keep them (the backend started with them present) or drop them (the backend started with them commented out); both observed. Use a testnet account only. See [ADR 0007](docs/adr/0007-environment-variables.md) and [ADR 0017](docs/adr/0017-one-operator-account-and-one-shared-hedera-client.md).
 

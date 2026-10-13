@@ -2,6 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-10-13
+- Note (2026-10-13): Decision 4 was superseded in the same lot: `transferHbar` now sends the transfer with the shared client and the sender only signs it, so the operator pays the fees of every operation of the backend (the author's choice, for consistency with the tokens). `transferHbar` no longer creates a client. No longer current: the third paragraph of "Context" (the fourth client), item 4 of "Decision", item 6 of "Consequences" and the alternative "Use the shared client in `transferHbar` too". Observed by the author: a transfer of 1 ℏ from `0.0.10952224` to `0.0.6106565`, made from the page `/transfer`, answered `SUCCESS` with the transaction ID `0.0.6106565@1791924039.660729844`, which starts with the operator account (the first part of a transaction ID is the account that pays), and the balance of the sender went from `8.99891412` to `7.99891412` ℏ, exactly the amount sent. The balance of the operator was not used as a measure, because each lookup of an account also costs it about 0.00113 ℏ. Not tested: a transfer from an account whose balance is too low, and the answer for a malformed account ID, compared with the previous code.
 
 ## Context
 
