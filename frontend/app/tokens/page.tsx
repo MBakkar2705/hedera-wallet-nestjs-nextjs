@@ -1,16 +1,18 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { getErrorMessage } from "@/lib/api";
 import { ACCOUNT_ID_PATTERN } from "@/lib/accounts";
 import { useActiveAccount } from "@/lib/active-account";
 import {
   associateToken,
   createToken,
+  listTokens,
   transferToken,
   TOKEN_ID_PATTERN,
   type AssociateTokenResult,
   type CreatedToken,
+  type TokenListPage,
   type TransferTokenResult,
 } from "@/lib/tokens";
 import { NoActiveAccount } from "@/components/NoActiveAccount";
@@ -19,6 +21,9 @@ import { Callout } from "@/components/ui/Callout";
 import { CodeValue } from "@/components/ui/CodeValue";
 import { Field, Input } from "@/components/ui/Field";
 import { PageHeader, Panel, PanelList } from "@/components/ui/Panel";
+
+// The backend accepts 1 to 100 tokens per page.
+const TOKENS_PER_PAGE = 10;
 
 export default function TokensPage() {
   const { account } = useActiveAccount();
@@ -48,6 +53,39 @@ export default function TokensPage() {
   const [transferred, setTransferred] = useState<TransferTokenResult | null>(
     null,
   );
+
+  // The tokens created through the backend, one page at a time
+  const [listPage, setListPage] = useState(1);
+  // Bumped after a creation, to load the list again.
+  const [listVersion, setListVersion] = useState(0);
+  const [tokenList, setTokenList] = useState<TokenListPage | null>(null);
+  const [listError, setListError] = useState<string | null>(null);
+
+  useEffect(() => {
+    // A late answer must not replace a newer one.
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const result = await listTokens(listPage, TOKENS_PER_PAGE);
+        if (cancelled) return;
+        setTokenList(result);
+        setListError(null);
+      } catch (caught) {
+        if (cancelled) return;
+        setListError(getErrorMessage(caught));
+      }
+    }
+
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [listPage, listVersion]);
+
+  const totalPages = tokenList
+    ? Math.max(1, Math.ceil(tokenList.total / tokenList.limit))
+    : 1;
 
   async function handleCreate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -79,6 +117,9 @@ export default function TokensPage() {
       // Pre-fill the next forms with the new token.
       setAssociateTokenInput(token.tokenId);
       setTransferTokenInput(token.tokenId);
+      // The new token is the newest: show the first page again.
+      setListPage(1);
+      setListVersion((version) => version + 1);
     } catch (caught) {
       setCreateError(getErrorMessage(caught));
     } finally {
@@ -210,6 +251,70 @@ export default function TokensPage() {
               </p>
               <CodeValue label="Token ID" value={created.tokenId} />
             </Callout>
+          )}
+        </Panel>
+
+        <Panel
+          title="Tokens created here"
+          description="The tokens created through this backend, newest first. Tokens created elsewhere are not listed."
+        >
+          {listError && <Callout tone="danger">{listError}</Callout>}
+
+          {!tokenList && !listError && <p className="text-muted">Loading...</p>}
+
+          {tokenList && tokenList.items.length === 0 && (
+            <p className="text-muted">
+              No token has been created through this backend yet.
+            </p>
+          )}
+
+          {tokenList && tokenList.items.length > 0 && (
+            <>
+              <ul className="divide-y divide-line">
+                {tokenList.items.map((token) => (
+                  <li
+                    key={token.tokenId}
+                    className="flex items-baseline justify-between gap-4 py-2"
+                  >
+                    <span>
+                      <strong>{token.symbol}</strong>{" "}
+                      <span className="text-muted">{token.name}</span>
+                      <span className="block font-mono text-sm text-muted">
+                        {token.tokenId}
+                      </span>
+                    </span>
+                    <span className="text-right">
+                      <span className="block font-medium tabular-nums">
+                        {token.initialSupply}
+                      </span>
+                      <span className="block text-sm text-muted">
+                        initial supply
+                      </span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <div className="flex items-center justify-between gap-4">
+                <Button
+                  variant="quiet"
+                  onClick={() => setListPage((page) => page - 1)}
+                  disabled={tokenList.page <= 1}
+                >
+                  Previous
+                </Button>
+                <span className="text-sm text-muted tabular-nums">
+                  Page {tokenList.page} of {totalPages} ({tokenList.total}{" "}
+                  tokens)
+                </span>
+                <Button
+                  variant="quiet"
+                  onClick={() => setListPage((page) => page + 1)}
+                  disabled={tokenList.page >= totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </>
           )}
         </Panel>
 

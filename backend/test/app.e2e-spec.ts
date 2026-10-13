@@ -57,4 +57,15 @@ describe('AppController (e2e)', () => {
     const body = response.body as { message: string[] };
     expect(body.message).toContain('initialBalance must not be less than 0');
   });
+
+  // The query is checked before any read of the database or call to Hedera.
+  it('/tokens (GET) rejects a limit above 100 with 400', async () => {
+    const response = await request(app.getHttpServer()).get(
+      '/tokens?limit=500',
+    );
+
+    expect(response.status).toBe(400);
+    const body = response.body as { message: string[] };
+    expect(body.message).toContain('limit must not be greater than 100');
+  });
 });

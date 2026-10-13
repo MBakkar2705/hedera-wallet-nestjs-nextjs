@@ -49,11 +49,36 @@ export interface TransferTokenResult {
   amount: number;
 }
 
+// GET /tokens (ListTokensQueryDto and listTokens in the backend): the tokens
+// created through the backend, newest first, one page at a time.
+export interface TokenListItem {
+  tokenId: string;
+  name: string;
+  symbol: string;
+  initialSupply: number;
+  // An ISO date, as JSON has no date type.
+  createdAt: string;
+}
+
+export interface TokenListPage {
+  items: TokenListItem[];
+  page: number;
+  limit: number;
+  total: number;
+}
+
 export function createToken(body: CreateTokenRequest): Promise<CreatedToken> {
   return request<CreatedToken>("/tokens", {
     method: "POST",
     body: JSON.stringify(body),
   });
+}
+
+export function listTokens(
+  page: number,
+  limit: number,
+): Promise<TokenListPage> {
+  return request<TokenListPage>(`/tokens?page=${page}&limit=${limit}`);
 }
 
 export function associateToken(

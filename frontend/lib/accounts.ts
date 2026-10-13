@@ -9,12 +9,28 @@ export interface CreatedAccount {
   initialBalance: number;
 }
 
+export interface AccountBalance {
+  // Exact decimal strings (an HBAR amount can exceed what a JS number holds).
+  hbar: string;
+  tinybars: string;
+}
+
+export interface AccountToken {
+  tokenId: string;
+  symbol: string;
+  // In the smallest unit of the token, as a string.
+  balance: string;
+}
+
 export interface AccountInfo {
   accountId: string;
   // Already formatted by the backend: the amount followed by the HBAR symbol.
+  // Kept by the backend for compatibility; "balance" is the structured form.
   hbarBalance: string;
-  // Token IDs, as returned by getAccountInfo in the backend.
+  // Token IDs, kept for compatibility; "tokens" carries more.
   tokenAssociations: string[];
+  balance: AccountBalance;
+  tokens: AccountToken[];
 }
 
 // Hedera account IDs look like 0.0.123456.

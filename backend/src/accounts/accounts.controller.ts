@@ -2,6 +2,8 @@ import { Body, Controller, Post, Get, Param } from '@nestjs/common';
 import { AccountsService } from './accounts.service';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { TransferHbarDto } from './dto/transfer-hbar.dto';
+import { AccountInfoResponseDto } from './dto/account-info-response.dto';
+import { TransferHbarResponseDto } from './dto/transfer-hbar-response.dto';
 import {
   ApiTags,
   ApiBody,
@@ -34,6 +36,7 @@ export class AccountsController {
   @ApiResponse({
     status: 200,
     description: 'Returns Hedera account info and balance',
+    type: AccountInfoResponseDto,
   })
   @ApiResponse({ status: 400, description: 'Malformed account ID' })
   @ApiResponse({ status: 404, description: 'Unknown account ID' })
@@ -45,8 +48,9 @@ export class AccountsController {
   @ApiOperation({ summary: 'Transfer HBAR between Hedera accounts' })
   @ApiBody({ type: TransferHbarDto })
   @ApiResponse({
-    status: 200,
+    status: 201,
     description: 'Transfers HBAR from source to destination account',
+    type: TransferHbarResponseDto,
   })
   @ApiResponse({
     status: 400,
