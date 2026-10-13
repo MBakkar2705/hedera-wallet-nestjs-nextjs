@@ -733,7 +733,7 @@ hedera-wallet-nestjs-nextjs\
 ## Local Persistence (SQLite)
 
 This backend uses SQLite to persist Hedera-related entities locally.  
-The database file hedera-wallet.db is automatically created in the folder the backend is started from. The path in the code is relative (`database: 'hedera-wallet.db'`), so with `pnpm start` the file is `backend/hedera-wallet.db`.
+The database file hedera-wallet.db is automatically created in the folder the backend is started from. The path is read from the `DATABASE_PATH` variable (`backend/src/config.ts`) and defaults to the relative path `hedera-wallet.db`, so with `pnpm start` the file is `backend/hedera-wallet.db`.
 
 ---
 
@@ -816,10 +816,19 @@ Credentials are read from a `.env` file in the `backend/` folder (`dotenv` reads
 
 copy backend\.env.example backend\.env
 
-- `OPERATOR_ID`, `OPERATOR_KEY`: read by the Hedera module and the tokens service.
-- `HEDERA_ACCOUNT_ID`, `HEDERA_PRIVATE_KEY`: read by the accounts service.
+- `HEDERA_ACCOUNT_ID`, `HEDERA_PRIVATE_KEY`: the operator account, which pays the fees of what the backend sends: from the code, the lookups, the creation of accounts and tokens, and the transfers of HBAR. Observed: the lookups cost the operator about 0.00113 ℏ each (earlier lot), and for a transfer of HBAR on 2026-10-13 the transaction ID started with the operator account and the sender lost exactly the amount sent. They are read once, by `createHederaClient()` (`backend/src/hedera/hedera-client.ts`), and the client built from them is shared by the Hedera, accounts and tokens modules.
 
-Both pairs can hold the same testnet account. The application exits at startup if `OPERATOR_ID`, `OPERATOR_KEY` or `HEDERA_PRIVATE_KEY` is missing. Use a testnet account only. See [ADR 0007](docs/adr/0007-environment-variables.md).
+The application exits at startup, with `Missing environment variable(s): ...`, if one of the two is missing or empty. Observed (2026-10-13) with both absent; the cases with only one absent or with an empty value are covered by unit tests only. `OPERATOR_ID` and `OPERATOR_KEY`, read before [ADR 0017](docs/adr/0017-one-operator-account-and-one-shared-hedera-client.md), are no longer read: an older `.env` can keep them (the backend started with them present) or drop them (the backend started with them commented out); both observed. Use a testnet account only. See [ADR 0007](docs/adr/0007-environment-variables.md) and [ADR 0017](docs/adr/0017-one-operator-account-and-one-shared-hedera-client.md).
+
+Two optional variables have a default and can be added to the same `.env` file:
+
+- `CORS_ORIGIN`: the one origin allowed to call the API from a browser. Default: `http://localhost:3001`. An empty value gives the default.
+- `PORT`: the port the API listens on. Default: `3000`. A value that is not an integer between 1 and 65535 stops the application at startup with `Invalid PORT "..."`.
+- `DATABASE_PATH`: the SQLite file. Default: `hedera-wallet.db`, relative to the folder the backend is started from (`backend/` with `pnpm start`). An empty value gives the default.
+
+Observed (2026-10-13): with `PORT=3005`, Swagger answered on `http://localhost:3005/api`; with `PORT=abc`, the backend printed `Invalid PORT "abc": expected an integer between 1 and 65535` and stopped. The frontend reads the API address from `NEXT_PUBLIC_API_URL` (`frontend/lib/api.ts`, default `http://localhost:3000`): it has to be set if `PORT` is changed. That was not tested.
+
+Observed (2026-10-13): with the default `DATABASE_PATH`, the backend started and the Tokens page, which reads the tokens from the database, listed the 3 tokens created before. A value other than the default was used by the end-to-end test only, not on the running backend.
 
 ---
 
@@ -843,7 +852,7 @@ pnpm --filter frontend dev
 
 The frontend runs on http://localhost:3001 and the backend on http://localhost:3000.
 
-CORS: the backend allows a single origin, http://localhost:3001 (`backend/src/main.ts`). This was checked with curl and from the accounts page in a browser: the browser sent a preflight request (204) before the POST (201).
+CORS: the backend allows a single origin, read from `CORS_ORIGIN` (default http://localhost:3001; read in `backend/src/config.ts`, applied by `backend/src/cors.ts`, called from `backend/src/main.ts`). The server puts that origin in `Access-Control-Allow-Origin` also when the request comes from another origin: it does not refuse the request, the browser blocks the page from reading the answer. Observed (2026-10-13): with curl, `Origin: http://other.example` got `Access-Control-Allow-Origin: http://localhost:3001`; with `CORS_ORIGIN=http://localhost:3002`, the accounts page on http://localhost:3001 showed "Cannot reach the API" and the browser console reported `blocked by CORS policy: The 'Access-Control-Allow-Origin' header has a value 'http://localhost:3002' that is not equal to the supplied origin`; with the default origin, the account lookup works from the frontend. Checked earlier, before the variable existed: the browser sent a preflight request (204) before the POST (201) from the accounts page. The end-to-end test checks the header and a preflight request answered with 204.
 
 Private keys: some endpoints take a private key in the request body (Hedera testnet demo only). The frontend keeps keys in page memory only: never in localStorage, sessionStorage, cookies, URLs or logs. Signing with a wallet instead of sending a key is a possible evolution, not implemented: it would require changes in the backend (`backend/src/`) and in its tests. See [ADR 0009](docs/adr/0009-private-keys-in-the-frontend.md) and [ADR 0010](docs/adr/0010-active-account-in-memory.md).
 
@@ -911,7 +920,7 @@ pnpm --filter backend format        // Prettier rewrites the files
 
 pnpm --filter backend test:e2e      // End-to-end test
 
-The end-to-end test is `backend/test/app.e2e-spec.ts`. It starts the application module, checks the response of `GET /`, and checks that two invalid request bodies and one invalid query (`GET /tokens?limit=500`) are refused with a 400 (the body or the query is checked before any call to Hedera). It sets throwaway Hedera credentials itself (a key generated at each run), so no `.env` file is needed to run it. The application still opens the local `hedera-wallet.db`. The Hedera clients are closed when the application closes: without that, Jest did not exit (observed).
+The end-to-end test is `backend/test/app.e2e-spec.ts`. It starts the application module, checks the response of `GET /`, checks the CORS header and a preflight request, and checks that two invalid request bodies and one invalid query (`GET /tokens?limit=500`) are refused with a 400 (the body or the query is checked before any call to Hedera). It sets throwaway Hedera credentials itself (a key generated at each run), so no `.env` file is needed to run it. It uses a throwaway database file in the temporary folder of the system (`DATABASE_PATH`, set at the start of the test and removed at the end; the removal was not checked by hand), so the test no longer opens `hedera-wallet.db`. Observed (2026-10-13): the last modification time of `backend/hedera-wallet.db` did not change after `pnpm test` and `pnpm --filter backend test:e2e`. The Hedera clients are closed when the application closes: without that, Jest did not exit (observed).
 
 There is no frontend test script yet. The frontend is checked by `pnpm --filter frontend lint`, `pnpm --filter frontend build` and by hand in a browser. The CI runs the lint and the build.
 
@@ -1241,7 +1250,7 @@ A multi-stage Dockerfile (`backend/Dockerfile`) builds a production image of the
 docker build -f backend/Dockerfile -t hedera-wallet .
 
 Credentials are not included in the image (`.env` files are excluded by `.dockerignore`).
-Running the container requires the four variables described in [Environment Variables](#environment-variables), provided at runtime:
+Running the container requires the two operator variables described in [Environment Variables](#environment-variables), provided at runtime:
 
 docker run --rm --init -p 3000:3000 --env-file backend/.env hedera-wallet
 
@@ -1260,6 +1269,7 @@ The backend evolutions listed in [docs/backend-evolutions.md](docs/backend-evolu
 | Rules and tooling | Rules for the AI assistant, backend lint and Prettier format check, runnable end-to-end test, Hedera clients closed at shutdown, CI steps, `docker run --init` | 11, 15 | 0004, 0005, 0006, 0013 |
 | Error handling    | Hedera errors become 404 and 400 through a global filter, empty topic answers 200, request bodies validated by a global ValidationPipe | 1, 2, 13, 20 | 0014 |
 | Token responses   | Structured balances and token details next to the formatted fields of the account lookup, amount value and unit on transfers, paginated list of the tokens created by the backend | 3, 4, 5 | 0015, 0016 |
+| Configuration     | CORS origin, port and database path read from environment variables, one operator account and one shared Hedera client (the operator pays every operation, HBAR transfers included), end-to-end test isolated from the local database | 9, 10, 24 | 0017 |
 
 ---
 
@@ -1293,6 +1303,7 @@ The records are numbered in the order of the project: first the backend, then th
 - [ADR 0014: A global filter that turns Hedera errors into HTTP responses](docs/adr/0014-global-filter-for-hedera-errors.md)
 - [ADR 0015: Structured amounts and token balances next to the formatted fields](docs/adr/0015-structured-amounts-and-token-balances.md)
 - [ADR 0016: A paginated list of the tokens created by the backend](docs/adr/0016-paginated-list-of-the-tokens.md)
+- [ADR 0017: One operator account in the environment and one shared Hedera client](docs/adr/0017-one-operator-account-and-one-shared-hedera-client.md)
 
 The records were renumbered to follow this order. Earlier commit messages use the former numbers: former 0001 is now 0009, 0002 is 0008, 0003 is 0007, 0005 is 0010, 0006 is 0011 and 0007 is 0012. The former 0008 to 0012 were never committed under those numbers. ADR 0004 keeps its number.
 

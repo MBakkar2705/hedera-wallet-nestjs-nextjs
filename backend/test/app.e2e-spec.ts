@@ -1,20 +1,32 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
 import * as request from 'supertest';
 import { App } from 'supertest/types';
 import { PrivateKey } from '@hashgraph/sdk';
 import { AppModule } from './../src/app.module';
+import { enableAppCors } from './../src/cors';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
+  let tempDir: string;
 
   beforeAll(() => {
     // Throwaway credentials: no .env file needed, and nothing real is used.
     const key = PrivateKey.generateED25519().toStringDer();
-    process.env.OPERATOR_ID = '0.0.1';
-    process.env.OPERATOR_KEY = key;
     process.env.HEDERA_ACCOUNT_ID = '0.0.1';
     process.env.HEDERA_PRIVATE_KEY = key;
+    // Fixed here so the CORS tests do not depend on the shell environment.
+    process.env.CORS_ORIGIN = 'http://localhost:3001';
+    // A throwaway database file: the test never opens the real hedera-wallet.db.
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hedera-wallet-e2e-'));
+    process.env.DATABASE_PATH = path.join(tempDir, 'test.db');
+  });
+
+  afterAll(() => {
+    fs.rmSync(tempDir, { recursive: true, force: true });
   });
 
   beforeEach(async () => {
@@ -23,6 +35,7 @@ describe('AppController (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    enableAppCors(app);
     await app.init();
   });
 
@@ -35,6 +48,38 @@ describe('AppController (e2e)', () => {
       .get('/')
       .expect(200)
       .expect('Welcome to Hedera Wallet API by M. Bakkar!');
+  });
+
+  it('uses the database file given by DATABASE_PATH', () => {
+    expect(fs.existsSync(process.env.DATABASE_PATH as string)).toBe(true);
+  });
+
+  it('/ (GET) sends the configured CORS origin, and never another one', async () => {
+    const allowed = await request(app.getHttpServer())
+      .get('/')
+      .set('Origin', 'http://localhost:3001');
+    expect(allowed.headers['access-control-allow-origin']).toBe(
+      'http://localhost:3001',
+    );
+
+    const other = await request(app.getHttpServer())
+      .get('/')
+      .set('Origin', 'http://other.example');
+    expect(other.headers['access-control-allow-origin']).not.toBe(
+      'http://other.example',
+    );
+  });
+
+  it('/accounts (OPTIONS) answers a preflight request with 204', async () => {
+    const response = await request(app.getHttpServer())
+      .options('/accounts')
+      .set('Origin', 'http://localhost:3001')
+      .set('Access-Control-Request-Method', 'POST');
+
+    expect(response.status).toBe(204);
+    expect(response.headers['access-control-allow-origin']).toBe(
+      'http://localhost:3001',
+    );
   });
 
   // The body is checked before any call to Hedera, so these tests need no network.

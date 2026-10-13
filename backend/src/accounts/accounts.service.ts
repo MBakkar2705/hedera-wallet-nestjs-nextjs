@@ -1,4 +1,4 @@
-import { Injectable, OnModuleDestroy } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AccountEntity } from './entities/account.entity';
@@ -18,23 +18,13 @@ import {
 } from '@hashgraph/sdk';
 
 @Injectable()
-export class AccountsService implements OnModuleDestroy {
-  private client: Client;
-
+export class AccountsService {
   constructor(
+    // The shared client is closed by HederaModule, not here.
+    @Inject('HEDERA_CLIENT') private readonly client: Client,
     @InjectRepository(AccountEntity)
     private readonly accountRepo: Repository<AccountEntity>,
-  ) {
-    const operatorId = process.env.HEDERA_ACCOUNT_ID!;
-    const operatorKey = PrivateKey.fromString(process.env.HEDERA_PRIVATE_KEY!);
-
-    this.client = Client.forTestnet();
-    this.client.setOperator(operatorId, operatorKey);
-  }
-
-  onModuleDestroy() {
-    this.client.close();
-  }
+  ) {}
 
   async createAccount(initialBalance: number): Promise<any> {
     const privateKey = PrivateKey.generate();
@@ -97,18 +87,18 @@ export class AccountsService implements OnModuleDestroy {
     toAccountId,
     amount,
   }: TransferHbarDto) {
-    const client = Client.forTestnet();
-
     const senderId = AccountId.fromString(fromAccountId);
     const senderKey = PrivateKey.fromString(fromPrivateKey);
-    client.setOperator(senderId, senderKey);
 
-    const tx = await new TransferTransaction()
-      .addHbarTransfer(fromAccountId, new Hbar(-amount))
-      .addHbarTransfer(toAccountId, new Hbar(amount))
-      .execute(client);
+    // The shared client (the operator account) pays the fees, as for the tokens.
+    // The HBAR leave the sender's account, so the sender signs the transfer.
+    const transaction = new TransferTransaction()
+      .addHbarTransfer(senderId, new Hbar(-amount))
+      .addHbarTransfer(toAccountId, new Hbar(amount));
 
-    const receipt: TransactionReceipt = await tx.getReceipt(client);
+    const signedTx = await transaction.freezeWith(this.client).sign(senderKey);
+    const tx = await signedTx.execute(this.client);
+    const receipt: TransactionReceipt = await tx.getReceipt(this.client);
 
     return {
       status: receipt.status.toString(),

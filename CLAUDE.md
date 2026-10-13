@@ -11,7 +11,7 @@ Claude writes the code in `backend/`, `frontend/` and `docs/`, after a detailed 
 ## Commands (backend)
 
 - Install: `pnpm install`
-- Test: `pnpm test` at the repo root runs the backend tests (5 suites, 28 tests; all must pass)
+- Test: `pnpm test` at the repo root runs the backend tests (7 suites, 46 tests; all must pass)
 
 ## Commands (frontend)
 
@@ -23,7 +23,7 @@ Claude writes the code in `backend/`, `frontend/` and `docs/`, after a detailed 
 ## Rules
 
 - Never read, create or print any `.env` file (including `.env.local`) or any private key.
-- Never put a secret in frontend code. Anything prefixed `NEXT_PUBLIC_` is readable by any visitor: only the API base URL may go there, never `OPERATOR_ID`, `OPERATOR_KEY` or any private key.
+- Never put a secret in frontend code. Anything prefixed `NEXT_PUBLIC_` is readable by any visitor: only the API base URL may go there, never `HEDERA_ACCOUNT_ID`, `HEDERA_PRIVATE_KEY` or any private key.
 - Some backend endpoints take a private key in the request body (Hedera testnet demo only). In the frontend, keys stay in page memory only: never in `localStorage`, `sessionStorage`, cookies, URLs or logs.
 - Before writing any file, give me a detailed plan: the files to change, what changes in each, why, and which tests are affected. Write only the files named in the plan I approved. After writing, show the diff and explain each choice.
 - Do not modify `.github/`, the root `package.json` or `pnpm-workspace.yaml` unless I explicitly ask, naming the file. `pnpm-lock.yaml` changes only through `pnpm install` when a dependency is added, and Claude tells me.

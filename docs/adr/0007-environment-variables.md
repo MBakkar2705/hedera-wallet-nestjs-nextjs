@@ -1,7 +1,8 @@
 # ADR 0007: Environment variables
 
-- Status: Accepted (decision 1 amended by ADR 0012: the `.env` file is now `backend/.env`)
+- Status: Accepted (decision 1 amended by ADR 0012: the `.env` file is now `backend/.env`; decision 4 superseded by ADR 0017)
 - Date: 2026-10-08
+- Note (2026-10-13): Decision 4 (both pairs kept) is superseded by [ADR 0017](0017-one-operator-account-and-one-shared-hedera-client.md): the backend reads only `HEDERA_ACCOUNT_ID` and `HEDERA_PRIVATE_KEY`, in `createHederaClient()`, and one client is shared. `OPERATOR_ID` and `OPERATOR_KEY` are no longer read, and `.env.example` lists the two variables, plus three optional ones in comments. No longer current: the "Context" (two pairs read in three places), the second and third items of "Decision" (four variables), the "Alternatives considered" (merging the pairs), and the first two items of "Consequences" (four variables, four in the `docker run` command). The first item of "Not proven" is partly settled: the message at startup is now `Missing environment variable(s): ...`, observed with both variables absent (ADR 0017).
 
 ## Context
 
