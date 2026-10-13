@@ -33,6 +33,7 @@ jest.mock('@hashgraph/sdk', () => {
       }),
     },
     Hbar,
+    HbarUnit: { Hbar: 'HBAR_UNIT' },
     AccountCreateTransaction: jest.fn().mockImplementation(() => ({
       setKey: jest.fn().mockReturnThis(),
       setInitialBalance: jest.fn().mockReturnThis(),
@@ -46,10 +47,28 @@ jest.mock('@hashgraph/sdk', () => {
       setAccountId: jest.fn().mockReturnThis(),
       execute: jest.fn().mockResolvedValue({
         accountId: { toString: () => '0.0.12345' },
-        balance: { toString: () => '100' },
+        balance: {
+          toString: () => '100',
+          to: () => ({ toFixed: () => '100' }),
+          toTinybars: () => ({ toString: () => '10000000000' }),
+        },
         tokenRelationships: new Map([
-          ['0.0.111', { tokenId: { toString: () => '0.0.111' } }],
-          ['0.0.222', { tokenId: { toString: () => '0.0.222' } }],
+          [
+            '0.0.111',
+            {
+              tokenId: { toString: () => '0.0.111' },
+              symbol: 'AAA',
+              balance: { toString: () => '10' },
+            },
+          ],
+          [
+            '0.0.222',
+            {
+              tokenId: { toString: () => '0.0.222' },
+              symbol: 'BBB',
+              balance: { toString: () => '2500' },
+            },
+          ],
         ]),
       }),
     })),
@@ -140,6 +159,11 @@ describe('AccountsService', () => {
         accountId: '0.0.12345',
         hbarBalance: '100',
         tokenAssociations: ['0.0.111', '0.0.222'],
+        balance: { hbar: '100', tinybars: '10000000000' },
+        tokens: [
+          { tokenId: '0.0.111', symbol: 'AAA', balance: '10' },
+          { tokenId: '0.0.222', symbol: 'BBB', balance: '2500' },
+        ],
       });
     });
 
@@ -173,6 +197,8 @@ describe('AccountsService', () => {
         from: '0.0.mocked-from',
         to: '0.0.to',
         amount: '5 ℏ',
+        value: 5,
+        unit: 'HBAR',
       });
     });
   });

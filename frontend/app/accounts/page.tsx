@@ -169,7 +169,7 @@ export default function AccountsPage() {
 
         <Panel
           title="Look up an account"
-          description="Shows the HBAR balance and the number of associated tokens."
+          description="Shows the HBAR balance and the associated tokens with their balance."
         >
           <form onSubmit={handleLookup} className="flex flex-col gap-4">
             <Field label="Account ID">
@@ -196,9 +196,29 @@ export default function AccountsPage() {
                 <dd className="font-medium tabular-nums">{info.hbarBalance}</dd>
                 <dt className="text-muted">Token associations</dt>
                 <dd className="font-medium tabular-nums">
-                  {info.tokenAssociations.length}
+                  {info.tokens.length}
                 </dd>
               </dl>
+              {info.tokens.length > 0 && (
+                <ul className="max-h-64 divide-y divide-line overflow-y-auto">
+                  {info.tokens.map((token) => (
+                    <li
+                      key={token.tokenId}
+                      className="flex items-baseline justify-between gap-4 py-1.5"
+                    >
+                      <span>
+                        <strong>{token.symbol}</strong>{" "}
+                        <span className="text-sm text-muted">
+                          {token.tokenId}
+                        </span>
+                      </span>
+                      <span className="font-medium tabular-nums">
+                        {token.balance}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </Callout>
           )}
         </Panel>

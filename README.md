@@ -247,7 +247,9 @@ Service logic:
 
 	- accountId
 	- hbarBalance
-	- tokenAssociations (list of token IDs)
+	- tokenAssociations (list of token IDs, kept for compatibility)
+	- balance (hbar and tinybars, two exact decimal strings)
+	- tokens (tokenId, symbol and balance of each associated token)
 	
 Test command:
 
@@ -265,6 +267,21 @@ Outcome:
 
 The account information for 0.0.10936687 was successfully retrieved.
 The HBAR balance reflects the latest state on the Hedera testnet
+Since 2026-10-13 the response also contains `balance` and `tokens`; the fields `hbarBalance` and `tokenAssociations` are kept for compatibility, see [ADR 0015](docs/adr/0015-structured-amounts-and-token-balances.md). Sample response, observed with curl and with Swagger on an account that has 285 token associations (the account ID is replaced by an example, and the two lists are shortened to two entries):
+
+{
+  "accountId": "0.0.1234567",
+  "hbarBalance": "933.15364179 ℏ",
+  "tokenAssociations": ["0.0.10952325", "0.0.10951658"],
+  "balance": { "hbar": "933.15364179", "tinybars": "93315364179" },
+  "tokens": [
+    { "tokenId": "0.0.10952325", "symbol": "TST2", "balance": "1000" },
+    { "tokenId": "0.0.10951658", "symbol": "TST", "balance": "990" }
+  ]
+}
+
+In the real answer, `tokens` and `tokenAssociations` both had 285 entries in the same order, and 285 is also the number of associations given by the public Hedera mirror node for this account. A token balance is in the smallest unit of the token: its decimals are not part of the response. The page `/accounts` of the frontend lists the tokens with their symbol, ID and balance.
+
 An unknown account ID returns HTTP 404 (`{"message":"Hedera does not know this account (INVALID_ACCOUNT_ID)","error":"Not Found","statusCode":404}`) and a malformed ID such as `abc` returns HTTP 400 (`failed to parse entity id: abc`). Both were observed with curl, see [ADR 0014](docs/adr/0014-global-filter-for-hedera-errors.md). Before that change, both returned HTTP 500 with the message "Internal server error".
 
 This retrieval does not create a new row in SQLite, but can be cross-checked against existing entries in hedera-wallet.db
@@ -294,7 +311,9 @@ Service logic:
 	- transactionId
 	- from
 	- to
-	- amount
+	- amount (formatted text, kept for compatibility)
+	- value (the amount as a number)
+	- unit ("HBAR")
 
 Required DTO fields:
 
@@ -322,6 +341,18 @@ Outcome:
 1 HBAR was successfully transferred from account 0.0.10937780 to account 0.0.10937901. The values above are the ones displayed by the frontend transfer screen, and the balance of the recipient went from 1 to 2 HBAR.
 The transaction was finalized on the Hedera testnet and logged in the TransferEntity table in hedera-wallet.db
 It can be inspected via VS Code SQLite Viewer in the transfer_entity table
+
+Since 2026-10-13 the response also contains `value` and `unit`, next to `amount`, see [ADR 0015](docs/adr/0015-structured-amounts-and-token-balances.md). Observed through Swagger on the running backend with a transfer of 1 HBAR (the account IDs and the transaction ID are replaced by examples): HTTP 201 (Swagger documented 200 before, and showed this 201 as undocumented; the documentation now says 201) and
+
+{
+  "status": "SUCCESS",
+  "transactionId": "0.0.1234567@1791882710.348380748",
+  "from": "0.0.1234567",
+  "to": "0.0.7654321",
+  "amount": "1 ℏ",
+  "value": 1,
+  "unit": "HBAR"
+}
 
 Invalid request: a body that fails the validation, for example `{}`, returns HTTP 400 with the list of the invalid fields (observed with curl on 2026-10-12: five messages, including "amount must not be less than 1"). Before, the same request returned HTTP 500. The validation is applied by a global ValidationPipe, see [ADR 0014](docs/adr/0014-global-filter-for-hedera-errors.md).
 
@@ -1065,8 +1096,8 @@ The following endpoints — POST /accounts, GET /accounts/:accountId, and POST /
 All returned responses expose consistent fields:
 
 - Creation: accountId, publicKey, privateKey, initialBalance
-- Info retrieval: accountId, hbarBalance, tokenAssociations
-- HBAR transfer: status, transactionId, from, to, amount
+- Info retrieval: accountId, hbarBalance, tokenAssociations, balance, tokens
+- HBAR transfer: status, transactionId, from, to, amount, value, unit
 
 Outcome:
 
@@ -1234,6 +1265,7 @@ The records are numbered in the order of the project: first the backend, then th
 
 - [ADR 0013: Backend lint, format and end-to-end checks](docs/adr/0013-backend-lint-format-and-e2e-checks.md)
 - [ADR 0014: A global filter that turns Hedera errors into HTTP responses](docs/adr/0014-global-filter-for-hedera-errors.md)
+- [ADR 0015: Structured amounts and token balances next to the formatted fields](docs/adr/0015-structured-amounts-and-token-balances.md)
 
 The records were renumbered to follow this order. Earlier commit messages use the former numbers: former 0001 is now 0009, 0002 is 0008, 0003 is 0007, 0005 is 0010, 0006 is 0011 and 0007 is 0012. The former 0008 to 0012 were never committed under those numbers. ADR 0004 keeps its number.
 

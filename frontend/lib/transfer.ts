@@ -9,13 +9,16 @@ export interface TransferHbarRequest {
 }
 
 // Response of transferHbar in the backend. "amount" is already formatted,
-// for example "1 followed by the HBAR symbol".
+// for example "1 followed by the HBAR symbol". "value" and "unit" are the same
+// amount as a number and its unit.
 export interface TransferHbarResult {
   status: string;
   transactionId: string;
   from: string;
   to: string;
   amount: string;
+  value: number;
+  unit: string;
 }
 
 export function transferHbar(

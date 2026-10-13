@@ -7,6 +7,7 @@ import {
   AccountCreateTransaction,
   PrivateKey,
   Hbar,
+  HbarUnit,
 } from '@hashgraph/sdk';
 import { AccountInfoQuery } from '@hashgraph/sdk';
 import { TransferHbarDto } from './dto/transfer-hbar.dto';
@@ -77,6 +78,16 @@ export class AccountsService implements OnModuleDestroy {
       tokenAssociations: Array.from(info.tokenRelationships.values()).map(
         (rel) => rel.tokenId.toString(),
       ),
+      balance: {
+        // toFixed() gives a plain decimal; toString() could use an exponent.
+        hbar: info.balance.to(HbarUnit.Hbar).toFixed(),
+        tinybars: info.balance.toTinybars().toString(),
+      },
+      tokens: Array.from(info.tokenRelationships.values()).map((rel) => ({
+        tokenId: rel.tokenId.toString(),
+        symbol: rel.symbol,
+        balance: rel.balance.toString(),
+      })),
     };
   }
 
@@ -105,6 +116,8 @@ export class AccountsService implements OnModuleDestroy {
       from: fromAccountId,
       to: toAccountId,
       amount: `${amount} ℏ`,
+      value: amount,
+      unit: 'HBAR',
     };
   }
   private async saveAccountLocally(data: {
