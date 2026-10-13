@@ -1,8 +1,17 @@
 import { TokensService } from './tokens.service';
-import { Body, Controller, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+  ValidationPipe,
+} from '@nestjs/common';
 import { CreateTokenDto } from './dto/create-token.dto';
 import { AssociateTokenDto } from './dto/associate-token.dto';
 import { TransferTokenDto } from './dto/transfer-token.dto';
+import { ListTokensQueryDto } from './dto/list-tokens-query.dto';
+import { TokenListResponseDto } from './dto/token-list-response.dto';
 import { ApiTags, ApiOperation, ApiBody, ApiResponse } from '@nestjs/swagger';
 
 @ApiTags('tokens')
@@ -44,5 +53,23 @@ export class TokensController {
   })
   async transferToken(@Body() dto: TransferTokenDto) {
     return await this.tokensService.transferToken(dto);
+  }
+
+  @Get()
+  @ApiOperation({
+    summary: 'List the tokens created by this backend, newest first',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'One page of tokens, with the total number of tokens',
+    type: TokenListResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid page or limit' })
+  async listTokens(
+    // transform: true turns the query strings ("2") into numbers. The global
+    // pipe validates but does not transform.
+    @Query(new ValidationPipe({ transform: true })) query: ListTokensQueryDto,
+  ) {
+    return await this.tokensService.listTokens(query);
   }
 }

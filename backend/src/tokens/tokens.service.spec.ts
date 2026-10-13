@@ -78,7 +78,7 @@ jest.mock('@hashgraph/sdk', () => {
 describe('TokensService – full stable test', () => {
   let service: TokensService;
 
-  const mockTokenRepo = { save: jest.fn() };
+  const mockTokenRepo = { save: jest.fn(), findAndCount: jest.fn() };
   const mockAssocRepo = { save: jest.fn() };
   const mockTransferRepo = { save: jest.fn() };
 
@@ -374,5 +374,60 @@ describe('TokensService – full stable test', () => {
     await expect(service.transferToken(dto)).rejects.toThrow(
       'Token transfer failed: REJECTED',
     );
+  });
+
+  describe('listTokens()', () => {
+    const createdAt = new Date('2026-10-13T09:00:00.000Z');
+    const row = (n: number) => ({
+      id: n,
+      tokenId: `0.0.${n}`,
+      name: `Token${n}`,
+      symbol: `T${n}`,
+      initialSupply: 1000,
+      createdAt,
+    });
+    const item = (n: number) => ({
+      tokenId: `0.0.${n}`,
+      name: `Token${n}`,
+      symbol: `T${n}`,
+      initialSupply: 1000,
+      createdAt,
+    });
+
+    it('should return the first page, newest first, without the internal id', async () => {
+      mockTokenRepo.findAndCount.mockResolvedValue([[row(3), row(2)], 3]);
+
+      const result = await service.listTokens({ page: 1, limit: 2 });
+
+      expect(mockTokenRepo.findAndCount).toHaveBeenCalledWith({
+        order: { createdAt: 'DESC', id: 'DESC' },
+        skip: 0,
+        take: 2,
+      });
+      expect(result).toEqual({
+        items: [item(3), item(2)],
+        page: 1,
+        limit: 2,
+        total: 3,
+      });
+    });
+
+    it('should skip the tokens of the previous pages', async () => {
+      mockTokenRepo.findAndCount.mockResolvedValue([[row(1)], 3]);
+
+      const result = await service.listTokens({ page: 2, limit: 2 });
+
+      expect(mockTokenRepo.findAndCount).toHaveBeenCalledWith({
+        order: { createdAt: 'DESC', id: 'DESC' },
+        skip: 2,
+        take: 2,
+      });
+      expect(result).toEqual({
+        items: [item(1)],
+        page: 2,
+        limit: 2,
+        total: 3,
+      });
+    });
   });
 });

@@ -407,6 +407,28 @@ A new HTS token MTK was successfully created on the Hedera testnet.
 Its assigned token ID is 0.0.6371281 and the initial supply is allocated to the treasury account.
 It´s stored in the SQLite database via TokenEntity and inspectable in VS Code in table tokens
 
+List of the tokens created here (GET /tokens): since 2026-10-13 the table `tokens` can be read. `GET /tokens` returns the tokens saved by this backend (not all the tokens of Hedera), newest first, one page at a time. The query parameters are `page` (a whole number from 1, default 1) and `limit` (a whole number from 1 to 100, default 20). See [ADR 0016](docs/adr/0016-paginated-list-of-the-tokens.md).
+
+Test command:
+
+curl.exe "http://localhost:3000/tokens?page=1&limit=2"
+
+Sample response (observed on 2026-10-13, when the local database held 2 tokens):
+
+{
+  "items": [
+    { "tokenId": "0.0.10952325", "name": "TestToken2", "symbol": "TST2", "initialSupply": 1000, "createdAt": "2026-10-09T09:23:32.000Z" },
+    { "tokenId": "0.0.10951658", "name": "TestToken", "symbol": "TST", "initialSupply": 1000, "createdAt": "2026-10-09T08:28:50.000Z" }
+  ],
+  "page": 1,
+  "limit": 2,
+  "total": 2
+}
+
+Outcome:
+
+With `limit=1`, page 1 returned TST2, page 2 returned TST and page 3 returned an empty list, with `total` 2 (observed with curl). `limit=500`, `page=0` and `page=abc` returned HTTP 400 with the validation messages. The page `/tokens` of the frontend lists the tokens 10 per page, with Previous and Next, and the list is updated by itself after a token is created (observed with 2 then 3 tokens; the buttons were not tried with more than one page).
+
 ---
 
 ### Step 7 Token association 
@@ -805,7 +827,7 @@ Both pairs can hold the same testnet account. The application exits at startup i
 
 The frontend is a Next.js application in the `frontend/` folder. It is a member of the pnpm workspace (see `pnpm-workspace.yaml`): a single `pnpm install` at the repository root installs the backend and the frontend, with one `pnpm-lock.yaml` at the root. See [ADR 0008](docs/adr/0008-frontend-integration-in-the-repository.md).
 
-Current state: first version complete. Four screens, tested by hand in a browser against the running backend: the accounts screen (`/accounts`) creates an account, looks up a balance and chooses the active account, the transfer screen (`/transfer`) sends HBAR from the active account, and the tokens screen (`/tokens`) creates a token, associates the active account with it and transfers tokens, and the topics screen (`/topics`) creates a topic, publishes a message and lists the messages of a topic. The account lookup shows only the number of associated tokens, because the backend returns token IDs only, and the messages of a topic come from the local database of the backend. Lint and build pass, locally and in the CI. Backend changes that would help the frontend are listed in [docs/backend-evolutions.md](docs/backend-evolutions.md).
+Current state: first version complete. Four screens, tested by hand in a browser against the running backend: the accounts screen (`/accounts`) creates an account, looks up a balance and chooses the active account, the transfer screen (`/transfer`) sends HBAR from the active account, and the tokens screen (`/tokens`) creates a token, associates the active account with it and transfers tokens, and the topics screen (`/topics`) creates a topic, publishes a message and lists the messages of a topic. The account lookup shows the HBAR balance and the associated tokens with their symbol and balance, and the tokens screen lists the tokens created through the backend, 10 per page (both since 2026-10-13, see [ADR 0015](docs/adr/0015-structured-amounts-and-token-balances.md) and [ADR 0016](docs/adr/0016-paginated-list-of-the-tokens.md)). The messages of a topic come from the local database of the backend. Lint and build pass, locally and in the CI. Backend changes that would help the frontend are listed in [docs/backend-evolutions.md](docs/backend-evolutions.md).
 
 Active account: to sign an operation, the user activates an account (account ID and private key) on `/accounts`. It is held in React state (`frontend/lib/active-account.tsx`), the top bar shows the account ID only, and the key is typed in a masked text field (not a password field, so that the browser does not offer to save it). It is forgotten when the user clicks Forget, after 5 minutes without a click or key press (checked by hand), or when the page is loaded again. See [ADR 0010](docs/adr/0010-active-account-in-memory.md). Tokens created by the backend are held by its operator account, so sending them requires activating that account with its key, typed in the form (Hedera testnet only, see [ADR 0009](docs/adr/0009-private-keys-in-the-frontend.md)).
 
@@ -889,7 +911,7 @@ pnpm --filter backend format        // Prettier rewrites the files
 
 pnpm --filter backend test:e2e      // End-to-end test
 
-The end-to-end test is `backend/test/app.e2e-spec.ts`. It starts the application module, checks the response of `GET /`, and checks that two invalid request bodies are refused with a 400 (the body is checked before any call to Hedera). It sets throwaway Hedera credentials itself (a key generated at each run), so no `.env` file is needed to run it. The application still opens the local `hedera-wallet.db`. The Hedera clients are closed when the application closes: without that, Jest did not exit (observed).
+The end-to-end test is `backend/test/app.e2e-spec.ts`. It starts the application module, checks the response of `GET /`, and checks that two invalid request bodies and one invalid query (`GET /tokens?limit=500`) are refused with a 400 (the body or the query is checked before any call to Hedera). It sets throwaway Hedera credentials itself (a key generated at each run), so no `.env` file is needed to run it. The application still opens the local `hedera-wallet.db`. The Hedera clients are closed when the application closes: without that, Jest did not exit (observed).
 
 There is no frontend test script yet. The frontend is checked by `pnpm --filter frontend lint`, `pnpm --filter frontend build` and by hand in a browser. The CI runs the lint and the build.
 
@@ -1113,7 +1135,7 @@ This section enables:
 
 ### Tokens Module Coverage:
 
-The following endpoints — POST /tokens, POST /tokens/associate, and POST /tokens/transfer — are documented via Swagger with:
+The following endpoints — POST /tokens, GET /tokens, POST /tokens/associate, and POST /tokens/transfer — are documented via Swagger with:
 
 - @ApiTags('tokens') for logical grouping
 - @ApiBody() decorators referencing:	
@@ -1121,10 +1143,12 @@ The following endpoints — POST /tokens, POST /tokens/associate, and POST /toke
 	- CreateTokenDto (name, symbol, initialSupply)
 	- AssociateTokenDto (accountId, privateKey, tokenId)
 	- TransferTokenDto (fromAccountId, toAccountId, tokenId, amount)
+	- ListTokensQueryDto (page, limit), for GET /tokens
 
 - @ApiResponse() annotations aligned per route:
 
 	- 201: success for creation, association, and transfer
+	- 200: success for the list of tokens
 	- 400: validation errors or Hedera SDK exceptions (e.g. insufficient token balance, invalid signatures)
 
 - DTO fields annotated with @ApiProperty() for Swagger schema generation
@@ -1135,6 +1159,7 @@ All returned responses expose consistent fields:
 - Creation: tokenId, name, symbol, initialSupply
 - Association: status, accountId, tokenId
 - Transfer: status, transactionId, from, to, tokenId, amount
+- List: items (tokenId, name, symbol, initialSupply, createdAt), page, limit, total
 
 Outcome:
 
@@ -1266,6 +1291,7 @@ The records are numbered in the order of the project: first the backend, then th
 - [ADR 0013: Backend lint, format and end-to-end checks](docs/adr/0013-backend-lint-format-and-e2e-checks.md)
 - [ADR 0014: A global filter that turns Hedera errors into HTTP responses](docs/adr/0014-global-filter-for-hedera-errors.md)
 - [ADR 0015: Structured amounts and token balances next to the formatted fields](docs/adr/0015-structured-amounts-and-token-balances.md)
+- [ADR 0016: A paginated list of the tokens created by the backend](docs/adr/0016-paginated-list-of-the-tokens.md)
 
 The records were renumbered to follow this order. Earlier commit messages use the former numbers: former 0001 is now 0009, 0002 is 0008, 0003 is 0007, 0005 is 0010, 0006 is 0011 and 0007 is 0012. The former 0008 to 0012 were never committed under those numbers. ADR 0004 keeps its number.
 

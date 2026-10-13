@@ -15,6 +15,7 @@ import {
 import { CreateTokenDto } from './dto/create-token.dto';
 import { AssociateTokenDto } from './dto/associate-token.dto';
 import { TransferTokenDto } from './dto/transfer-token.dto';
+import { ListTokensQueryDto } from './dto/list-tokens-query.dto';
 
 import { TokenEntity } from './entities/token.entity';
 import { AssociationEntity } from './entities/association.entity';
@@ -79,6 +80,30 @@ export class TokensService implements OnModuleDestroy {
     await this.tokenRepo.save({ tokenId, name, symbol, initialSupply });
 
     return { tokenId, name, symbol, initialSupply };
+  }
+
+  async listTokens({ page, limit }: ListTokensQueryDto) {
+    // Newest first. The id breaks the tie between tokens saved in the same second.
+    const [tokens, total] = await this.tokenRepo.findAndCount({
+      order: { createdAt: 'DESC', id: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+
+    return {
+      items: tokens.map(
+        ({ tokenId, name, symbol, initialSupply, createdAt }) => ({
+          tokenId,
+          name,
+          symbol,
+          initialSupply,
+          createdAt,
+        }),
+      ),
+      page,
+      limit,
+      total,
+    };
   }
 
   async associateToken(dto: AssociateTokenDto) {
