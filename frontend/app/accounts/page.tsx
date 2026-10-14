@@ -109,7 +109,7 @@ export default function AccountsPage() {
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-10 px-6 py-10">
       <PageHeader
         title="Accounts"
-        description="Create a testnet account, check a balance, and choose the account that signs your transactions."
+        description="Create a testnet account, look up an account, and choose the account that signs your transactions."
       />
 
       <PanelList>
@@ -180,7 +180,7 @@ export default function AccountsPage() {
               />
             </Field>
             <Button type="submit" disabled={lookingUp}>
-              {lookingUp ? "Searching..." : "Get balance"}
+              {lookingUp ? "Searching..." : "Get info"}
             </Button>
           </form>
 
