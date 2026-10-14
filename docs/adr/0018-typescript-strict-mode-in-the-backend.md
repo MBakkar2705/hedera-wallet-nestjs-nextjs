@@ -2,6 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-10-14
+- Note (2026-10-14): The first item of "Not proven" (the CI with these changes) is no longer current: the CI ran green on commit `1718c2a`, including the new step `pnpm --filter backend build` (reported by the author).
 
 ## Context
 

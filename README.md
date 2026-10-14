@@ -1270,6 +1270,7 @@ The backend evolutions listed in [docs/backend-evolutions.md](docs/backend-evolu
 | Error handling    | Hedera errors become 404 and 400 through a global filter, empty topic answers 200, request bodies validated by a global ValidationPipe | 1, 2, 13, 20 | 0014 |
 | Token responses   | Structured balances and token details next to the formatted fields of the account lookup, amount value and unit on transfers, paginated list of the tokens created by the backend | 3, 4, 5 | 0015, 0016 |
 | Configuration     | CORS origin, port and database path read from environment variables, one operator account and one shared Hedera client (the operator pays every operation, HBAR transfers included), end-to-end test isolated from the local database | 9, 10, 24 | 0017 |
+| Strict TypeScript | `strict: true` in the backend, with `!` on the 75 properties of the entities and DTO that a library fills; the CI builds the backend | 16, 25 | 0018 |
 
 ---
 
