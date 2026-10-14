@@ -250,6 +250,7 @@ Service logic:
 	- tokenAssociations (list of token IDs, kept for compatibility)
 	- balance (hbar and tinybars, two exact decimal strings)
 	- tokens (tokenId, symbol and balance of each associated token)
+	- key (the type and the raw public key of the account when it is a single key, otherwise null)
 	
 Test command:
 
@@ -281,6 +282,8 @@ Since 2026-10-13 the response also contains `balance` and `tokens`; the fields `
 }
 
 In the real answer, `tokens` and `tokenAssociations` both had 285 entries in the same order, and 285 is also the number of associations given by the public Hedera mirror node for this account. A token balance is in the smallest unit of the token: its decimals are not part of the response. The page `/accounts` of the frontend lists the tokens with their symbol, ID and balance.
+
+Since 2026-10-14 the response also contains `key`, the public key of the account, so that a client can check that a private key belongs to it (see [ADR 0019](docs/adr/0019-check-of-the-account-and-its-key-at-activation.md)): `{ "type": "ED25519", "publicKey": "<64 hexadecimal characters>" }` for a single Ed25519 key, the same with `"secp256k1"` and 66 characters for a single ECDSA key, and `null` when the key of the account is a list of keys, a threshold key or a contract key. Observed with curl: an Ed25519 account and an ECDSA account both answered with their key, and the key of the first one is the one the author noted when the account was created. The answer `null` was not observed on the network, only in a unit test.
 
 An unknown account ID returns HTTP 404 (`{"message":"Hedera does not know this account (INVALID_ACCOUNT_ID)","error":"Not Found","statusCode":404}`) and a malformed ID such as `abc` returns HTTP 400 (`failed to parse entity id: abc`). Both were observed with curl, see [ADR 0014](docs/adr/0014-global-filter-for-hedera-errors.md). Before that change, both returned HTTP 500 with the message "Internal server error".
 
@@ -838,7 +841,7 @@ The frontend is a Next.js application in the `frontend/` folder. It is a member 
 
 Current state: first version complete. Four screens, tested by hand in a browser against the running backend: the accounts screen (`/accounts`) creates an account, looks up an account and chooses the active account, the transfer screen (`/transfer`) sends HBAR from the active account, and the tokens screen (`/tokens`) creates a token, associates the active account with it and transfers tokens, and the topics screen (`/topics`) creates a topic, publishes a message and lists the messages of a topic. The account lookup shows the HBAR balance and the associated tokens with their symbol and balance, and the tokens screen lists the tokens created through the backend, 10 per page (both since 2026-10-13, see [ADR 0015](docs/adr/0015-structured-amounts-and-token-balances.md) and [ADR 0016](docs/adr/0016-paginated-list-of-the-tokens.md)). The messages of a topic come from the local database of the backend. Lint and build pass, locally and in the CI. Backend changes that would help the frontend are listed in [docs/backend-evolutions.md](docs/backend-evolutions.md).
 
-Active account: to sign an operation, the user activates an account (account ID and private key) on `/accounts`. It is held in React state (`frontend/lib/active-account.tsx`), the top bar shows the account ID only, and the key is typed in a masked text field (not a password field, so that the browser does not offer to save it). It is forgotten when the user clicks Forget, after 5 minutes without a click or key press (checked by hand), or when the page is loaded again. See [ADR 0010](docs/adr/0010-active-account-in-memory.md). Tokens created by the backend are held by its operator account, so sending them requires activating that account with its key, typed in the form (Hedera testnet only, see [ADR 0009](docs/adr/0009-private-keys-in-the-frontend.md)).
+Active account: to sign an operation, the user activates an account (account ID and private key) on `/accounts`. It is held in React state (`frontend/lib/active-account.tsx`), the top bar shows the account ID only, and the key is typed in a masked text field (not a password field, so that the browser does not offer to save it). It is forgotten when the user clicks Forget, after 5 minutes without a click or key press (checked by hand), or when the page is loaded again. See [ADR 0010](docs/adr/0010-active-account-in-memory.md). When an account is activated, the page asks the backend for the account and checks, in the browser, that the private key belongs to it: an unknown account, a key that does not belong to the account, a key that cannot be read, an account whose key is not a single key, or a backend that cannot be reached refuses the activation (see [ADR 0019](docs/adr/0019-check-of-the-account-and-its-key-at-activation.md)). The check uses `@hashgraph/sdk`, loaded with `import()` when an account is activated, and the lookup of an account shows its public key. Tokens created by the backend are held by its operator account, so sending them requires activating that account with its key, typed in the form (Hedera testnet only, see [ADR 0009](docs/adr/0009-private-keys-in-the-frontend.md)).
 
 Design: the colors are defined once in `frontend/app/globals.css` (Tailwind 4 tokens, indigo and violet, dark values defined but not displayed yet). The repeated parts of the interface are local components in `frontend/components/ui/` (`Button`, `Field`, `Panel`, `Callout`, `CodeValue`), and the header, the brand mark and the active account bar are in `frontend/components/`. The design uses Tailwind only, with no UI library. Keys and transaction values have a Copy button with a warning about the clipboard. See [ADR 0011](docs/adr/0011-design-system-tailwind-local-components.md).
 
@@ -1127,7 +1130,7 @@ The following endpoints — POST /accounts, GET /accounts/:accountId, and POST /
 All returned responses expose consistent fields:
 
 - Creation: accountId, publicKey, privateKey, initialBalance
-- Info retrieval: accountId, hbarBalance, tokenAssociations, balance, tokens
+- Info retrieval: accountId, hbarBalance, tokenAssociations, balance, tokens, key
 - HBAR transfer: status, transactionId, from, to, amount, value, unit
 
 Outcome:
@@ -1306,6 +1309,7 @@ The records are numbered in the order of the project: first the backend, then th
 - [ADR 0016: A paginated list of the tokens created by the backend](docs/adr/0016-paginated-list-of-the-tokens.md)
 - [ADR 0017: One operator account in the environment and one shared Hedera client](docs/adr/0017-one-operator-account-and-one-shared-hedera-client.md)
 - [ADR 0018: TypeScript strict mode in the backend, with `!` on the properties filled by a library](docs/adr/0018-typescript-strict-mode-in-the-backend.md)
+- [ADR 0019: Check of the account and of its key when an account is activated](docs/adr/0019-check-of-the-account-and-its-key-at-activation.md)
 
 The records were renumbered to follow this order. Earlier commit messages use the former numbers: former 0001 is now 0009, 0002 is 0008, 0003 is 0007, 0005 is 0010, 0006 is 0011 and 0007 is 0012. The former 0008 to 0012 were never committed under those numbers. ADR 0004 keeps its number.
 

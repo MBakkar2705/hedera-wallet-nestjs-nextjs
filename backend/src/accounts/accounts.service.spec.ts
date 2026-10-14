@@ -17,6 +17,22 @@ jest.mock('@hashgraph/sdk', () => {
     }
   }
 
+  // A real class, so that `info.key instanceof PublicKey` works in the service.
+  class PublicKey {
+    static fromString = jest.fn().mockReturnValue({
+      toString: () => 'mocked-public-key',
+    });
+
+    constructor(
+      public type: string,
+      private raw: string,
+    ) {}
+
+    toStringRaw(): string {
+      return this.raw;
+    }
+  }
+
   return {
     PrivateKey: {
       generate: jest.fn().mockReturnValue({
@@ -27,11 +43,7 @@ jest.mock('@hashgraph/sdk', () => {
         toString: () => 'mocked-private-key',
       }),
     },
-    PublicKey: {
-      fromString: jest.fn().mockReturnValue({
-        toString: () => 'mocked-public-key',
-      }),
-    },
+    PublicKey,
     Hbar,
     HbarUnit: { Hbar: 'HBAR_UNIT' },
     AccountCreateTransaction: jest.fn().mockImplementation(() => ({
@@ -47,6 +59,7 @@ jest.mock('@hashgraph/sdk', () => {
       setAccountId: jest.fn().mockReturnThis(),
       execute: jest.fn().mockResolvedValue({
         accountId: { toString: () => '0.0.12345' },
+        key: new PublicKey('ED25519', 'mocked-raw-public-key'),
         balance: {
           toString: () => '100',
           to: () => ({ toFixed: () => '100' }),
@@ -165,7 +178,54 @@ describe('AccountsService', () => {
           { tokenId: '0.0.111', symbol: 'AAA', balance: '10' },
           { tokenId: '0.0.222', symbol: 'BBB', balance: '2500' },
         ],
+        key: { type: 'ED25519', publicKey: 'mocked-raw-public-key' },
       });
+    });
+
+    it('should return the type and the raw public key of an ECDSA key', async () => {
+      const { AccountInfoQuery, PublicKey } = require('@hashgraph/sdk');
+      AccountInfoQuery.mockImplementationOnce(() => ({
+        setAccountId: jest.fn().mockReturnThis(),
+        execute: jest.fn().mockResolvedValue({
+          accountId: { toString: () => '0.0.12345' },
+          key: new PublicKey('secp256k1', 'mocked-raw-ecdsa-key'),
+          balance: {
+            toString: () => '100',
+            to: () => ({ toFixed: () => '100' }),
+            toTinybars: () => ({ toString: () => '10000000000' }),
+          },
+          tokenRelationships: new Map(),
+        }),
+      }));
+
+      const result = await service.getAccountInfo('0.0.12345');
+
+      expect(result.key).toEqual({
+        type: 'secp256k1',
+        publicKey: 'mocked-raw-ecdsa-key',
+      });
+    });
+
+    it('should return key: null when the key is not a single public key', async () => {
+      const { AccountInfoQuery } = require('@hashgraph/sdk');
+      AccountInfoQuery.mockImplementationOnce(() => ({
+        setAccountId: jest.fn().mockReturnThis(),
+        execute: jest.fn().mockResolvedValue({
+          accountId: { toString: () => '0.0.12345' },
+          // A list of keys: not a PublicKey.
+          key: { toArray: () => [] },
+          balance: {
+            toString: () => '100',
+            to: () => ({ toFixed: () => '100' }),
+            toTinybars: () => ({ toString: () => '10000000000' }),
+          },
+          tokenRelationships: new Map(),
+        }),
+      }));
+
+      const result = await service.getAccountInfo('0.0.12345');
+
+      expect(result.key).toBeNull();
     });
 
     it('should let the SDK error through (the global filter maps it)', async () => {
