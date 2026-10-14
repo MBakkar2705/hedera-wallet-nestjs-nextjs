@@ -8,20 +8,20 @@ import {
 @Entity('tokens')
 export class TokenEntity {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column()
-  tokenId: string;
+  tokenId!: string;
 
   @Column()
-  name: string;
+  name!: string;
 
   @Column()
-  symbol: string;
+  symbol!: string;
 
   @Column()
-  initialSupply: number;
+  initialSupply!: number;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 }

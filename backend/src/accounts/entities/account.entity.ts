@@ -3,20 +3,20 @@ import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 @Entity('accounts')
 export class AccountEntity {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column()
-  accountId: string;
+  accountId!: string;
 
   @Column()
-  publicKey: string;
+  publicKey!: string;
 
   @Column()
-  privateKey: string;
+  privateKey!: string;
 
   @Column({ type: 'integer', default: 0 })
-  initialBalance: number;
+  initialBalance!: number;
 
   @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
-  createdAt: Date;
+  createdAt!: Date;
 }

@@ -39,6 +39,9 @@ jobs:
       - name: Backend e2e tests
         run: pnpm --filter backend test:e2e
 
+      - name: Backend build
+        run: pnpm --filter backend build
+
       - name: Frontend lint
         run: pnpm --filter frontend lint
 

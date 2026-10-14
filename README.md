@@ -92,7 +92,7 @@ Frontend:
 | Backend and frontend in sibling folders         | Done        |
 | Backend lint and format (ESLint, Prettier)      | Done        |
 | Backend end-to-end test (supertest)             | Done        |
-| CI: backend tests, lint, format check and e2e; frontend lint and build | Done        |
+| CI: backend tests, lint, format check, e2e and build; frontend lint and build | Done        |
 
 ---
 
@@ -1256,7 +1256,7 @@ docker run --rm --init -p 3000:3000 --env-file backend/.env hedera-wallet
 
 Without these variables, the application exits at startup. The `--init` option is needed for Ctrl+C to stop the container. Without it, Ctrl+C had no effect after about 30 seconds and `docker stop` took about 10 seconds; with it, Ctrl+C stopped the container in about 2 seconds (all observed). In the Nest log, the application is process 1 without `--init` and process 7 with it. The cause was not tested separately.
 
-The GitHub Actions workflow (.github/workflows/ci.yml) installs dependencies with pnpm, runs the backend tests (`pnpm test`), the backend lint, the backend format check and the backend end-to-end test, then the lint and the build of the frontend, on every push and pull request.
+The GitHub Actions workflow (.github/workflows/ci.yml) installs dependencies with pnpm, runs the backend tests (`pnpm test`), the backend lint, the backend format check, the backend end-to-end test and the backend build, then the lint and the build of the frontend, on every push and pull request.
 
 ---
 
@@ -1304,6 +1304,7 @@ The records are numbered in the order of the project: first the backend, then th
 - [ADR 0015: Structured amounts and token balances next to the formatted fields](docs/adr/0015-structured-amounts-and-token-balances.md)
 - [ADR 0016: A paginated list of the tokens created by the backend](docs/adr/0016-paginated-list-of-the-tokens.md)
 - [ADR 0017: One operator account in the environment and one shared Hedera client](docs/adr/0017-one-operator-account-and-one-shared-hedera-client.md)
+- [ADR 0018: TypeScript strict mode in the backend, with `!` on the properties filled by a library](docs/adr/0018-typescript-strict-mode-in-the-backend.md)
 
 The records were renumbered to follow this order. Earlier commit messages use the former numbers: former 0001 is now 0009, 0002 is 0008, 0003 is 0007, 0005 is 0010, 0006 is 0011 and 0007 is 0012. The former 0008 to 0012 were never committed under those numbers. ADR 0004 keeps its number.
 
@@ -1311,7 +1312,7 @@ The records were renumbered to follow this order. Earlier commit messages use th
 
 ## Notes
 
-- The frontend runs TypeScript in strict mode (`strict: true`). The backend enables `strictNullChecks` only (`noImplicitAny` is off).
+- The frontend and the backend both run TypeScript in strict mode (`strict: true`). In the backend, the properties of the entities and of the request DTOs, which a library fills (TypeORM, the validation), are declared with `!` (see [ADR 0018](docs/adr/0018-typescript-strict-mode-in-the-backend.md)); a new class of this kind needs the same.
 - Both applications are structured for testability.
 - Backend: modules are isolated by responsibility (accounts, tokens, topics, etc.).
 - Backend: SQLite is used for lightweight storage during development.

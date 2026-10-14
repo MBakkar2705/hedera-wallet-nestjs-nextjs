@@ -8,14 +8,14 @@ import {
 @Entity()
 export class TopicEntity {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column()
-  topicId: string;
+  topicId!: string;
 
   @Column({ nullable: true })
   memo?: string;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 }

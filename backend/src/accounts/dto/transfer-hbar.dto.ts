@@ -4,21 +4,21 @@ import { ApiProperty } from '@nestjs/swagger';
 export class TransferHbarDto {
   @ApiProperty({ example: '0.0.1234', description: 'Sender Hedera account ID' })
   @IsString()
-  fromAccountId: string;
+  fromAccountId!: string;
 
   @ApiProperty({
     example: '302e020100300506032b657004220420...',
     description: 'Sender private key',
   })
   @IsString()
-  fromPrivateKey: string;
+  fromPrivateKey!: string;
 
   @ApiProperty({
     example: '0.0.5678',
     description: 'Recipient Hedera account ID',
   })
   @IsString()
-  toAccountId: string;
+  toAccountId!: string;
 
   @ApiProperty({
     example: 25,
@@ -27,5 +27,5 @@ export class TransferHbarDto {
   })
   @IsNumber()
   @Min(1)
-  amount: number;
+  amount!: number;
 }

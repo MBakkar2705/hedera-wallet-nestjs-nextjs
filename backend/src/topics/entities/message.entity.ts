@@ -8,17 +8,17 @@ import {
 @Entity('message_entity')
 export class MessageEntity {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column()
-  topicId: string;
+  topicId!: string;
 
   @Column()
-  message: string;
+  message!: string;
 
   @Column()
-  transactionId: string;
+  transactionId!: string;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 }

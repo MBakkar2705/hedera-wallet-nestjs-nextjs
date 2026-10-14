@@ -5,40 +5,40 @@ export class AccountBalanceDto {
     example: '3.99888384',
     description: 'HBAR balance as an exact decimal string, without a symbol',
   })
-  hbar: string;
+  hbar!: string;
 
   @ApiProperty({
     example: '399888384',
     description: 'The same balance in tinybars (1 HBAR = 100,000,000 tinybars)',
   })
-  tinybars: string;
+  tinybars!: string;
 }
 
 export class AccountTokenDto {
   @ApiProperty({ example: '0.0.123456', description: 'Token ID' })
-  tokenId: string;
+  tokenId!: string;
 
   @ApiProperty({ example: 'MTK', description: 'Symbol of the token' })
-  symbol: string;
+  symbol!: string;
 
   @ApiProperty({
     example: '10',
     description:
       'Balance of the account in the smallest unit of the token, as a string (the number of decimals of the token is not part of this response)',
   })
-  balance: string;
+  balance!: string;
 }
 
 export class AccountInfoResponseDto {
   @ApiProperty({ example: '0.0.10936687', description: 'Hedera account ID' })
-  accountId: string;
+  accountId!: string;
 
   @ApiProperty({
     example: '1 ℏ',
     description:
       'Formatted balance with its unit. Kept for compatibility: prefer "balance".',
   })
-  hbarBalance: string;
+  hbarBalance!: string;
 
   @ApiProperty({
     type: [String],
@@ -46,14 +46,14 @@ export class AccountInfoResponseDto {
     description:
       'IDs of the associated tokens. Kept for compatibility: prefer "tokens".',
   })
-  tokenAssociations: string[];
+  tokenAssociations!: string[];
 
   @ApiProperty({ type: AccountBalanceDto })
-  balance: AccountBalanceDto;
+  balance!: AccountBalanceDto;
 
   @ApiProperty({
     type: [AccountTokenDto],
     description: 'Associated tokens, with their symbol and the account balance',
   })
-  tokens: AccountTokenDto[];
+  tokens!: AccountTokenDto[];
 }
