@@ -4,11 +4,11 @@ import { ApiProperty } from '@nestjs/swagger';
 export class CreateTokenDto {
   @ApiProperty({ example: 'MyToken', description: 'Name of the token' })
   @IsString()
-  name: string;
+  name!: string;
 
   @ApiProperty({ example: 'MTK', description: 'Symbol of the token' })
   @IsString()
-  symbol: string;
+  symbol!: string;
 
   @ApiProperty({
     example: 1000,
@@ -17,5 +17,5 @@ export class CreateTokenDto {
   })
   @IsInt()
   @Min(1)
-  initialSupply: number;
+  initialSupply!: number;
 }

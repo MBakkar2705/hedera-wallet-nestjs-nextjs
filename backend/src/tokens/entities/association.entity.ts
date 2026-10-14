@@ -8,17 +8,17 @@ import {
 @Entity('associations')
 export class AssociationEntity {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column()
-  accountId: string;
+  accountId!: string;
 
   @Column()
-  tokenId: string;
+  tokenId!: string;
 
   @Column()
-  status: string;
+  status!: string;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 }

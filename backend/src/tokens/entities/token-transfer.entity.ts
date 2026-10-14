@@ -8,23 +8,23 @@ import {
 @Entity('token_transfer_entity')
 export class TokenTransferEntity {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column()
-  fromAccountId: string;
+  fromAccountId!: string;
 
   @Column()
-  toAccountId: string;
+  toAccountId!: string;
 
   @Column()
-  tokenId: string;
+  tokenId!: string;
 
   @Column('integer')
-  amount: number;
+  amount!: number;
 
   @Column()
-  transactionId: string;
+  transactionId!: string;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 }
