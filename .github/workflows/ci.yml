@@ -45,5 +45,8 @@ jobs:
       - name: Frontend lint
         run: pnpm --filter frontend lint
 
+      - name: Frontend format check
+        run: pnpm --filter frontend format:check
+
       - name: Frontend build
         run: pnpm --filter frontend build

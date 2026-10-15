@@ -220,7 +220,8 @@ export default function TopicsPage() {
             <div className="flex flex-col gap-3">
               <p className="font-medium">
                 Topic <span className="font-mono">{loadedTopicId}</span>:{" "}
-                {messages.length} {messages.length === 1 ? "message" : "messages"}
+                {messages.length}{" "}
+                {messages.length === 1 ? "message" : "messages"}
               </p>
               {messages.length === 0 && (
                 <p className="text-sm text-muted">

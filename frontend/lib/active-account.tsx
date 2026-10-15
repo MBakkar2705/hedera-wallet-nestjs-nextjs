@@ -72,7 +72,9 @@ export function ActiveAccountProvider({ children }: { children: ReactNode }) {
 export function useActiveAccount(): ActiveAccountContextValue {
   const context = useContext(ActiveAccountContext);
   if (!context) {
-    throw new Error("useActiveAccount must be used inside ActiveAccountProvider.");
+    throw new Error(
+      "useActiveAccount must be used inside ActiveAccountProvider.",
+    );
   }
   return context;
 }

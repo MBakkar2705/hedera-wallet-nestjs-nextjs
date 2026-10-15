@@ -33,7 +33,10 @@ export function AppHeader() {
 
         <ActiveAccountBar />
 
-        <nav aria-label="Sections" className="flex w-full flex-wrap gap-1 text-sm">
+        <nav
+          aria-label="Sections"
+          className="flex w-full flex-wrap gap-1 text-sm"
+        >
           {links.map((link) => {
             const current = pathname === link.href;
             return (

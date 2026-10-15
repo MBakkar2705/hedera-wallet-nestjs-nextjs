@@ -172,11 +172,7 @@ export default function TokensPage() {
       return;
     }
     // The backend requires an integer of at least 1.
-    if (
-      amountInput.trim() === "" ||
-      !Number.isInteger(amount) ||
-      amount < 1
-    ) {
+    if (amountInput.trim() === "" || !Number.isInteger(amount) || amount < 1) {
       setTransferError("Enter a whole amount, at least 1.");
       return;
     }
@@ -245,9 +241,8 @@ export default function TokensPage() {
           {created && (
             <Callout tone="success">
               <p>
-                Token <strong>{created.tokenId}</strong> created:{" "}
-                {created.name} ({created.symbol}), supply{" "}
-                {created.initialSupply}.
+                Token <strong>{created.tokenId}</strong> created: {created.name}{" "}
+                ({created.symbol}), supply {created.initialSupply}.
               </p>
               <CodeValue label="Token ID" value={created.tokenId} />
             </Callout>
