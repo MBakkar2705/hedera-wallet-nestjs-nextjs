@@ -11,7 +11,8 @@ export class AssociateTokenDto {
 
   @ApiProperty({
     example: '302e020100300506032b657004220420...',
-    description: 'Private key of the target account',
+    description:
+      'Private key of the target account: DER, or 64 hexadecimal characters (the key type is then read from the account on Hedera)',
   })
   @IsString()
   privateKey!: string;

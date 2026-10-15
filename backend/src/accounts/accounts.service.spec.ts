@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AccountsService } from './accounts.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { AccountEntity } from './entities/account.entity';
+import * as readPrivateKeyModule from '../hedera/read-private-key';
 
 jest.mock('@hashgraph/sdk', () => {
   class Hbar {
@@ -286,6 +287,27 @@ describe('AccountsService', () => {
       );
       expect(transaction.freezeWith).toHaveBeenCalledWith(mockClient);
       expect(transaction.sign).toHaveBeenCalled();
+    });
+
+    it('should read the key with the account of the sender', async () => {
+      const spy = jest.spyOn(readPrivateKeyModule, 'readPrivateKey');
+
+      try {
+        await service.transferHbar({
+          fromAccountId: '0.0.5001',
+          fromPrivateKey: 'mocked-private-key',
+          toAccountId: '0.0.5002',
+          amount: 5,
+        });
+
+        expect(spy).toHaveBeenCalledWith(
+          mockClient,
+          '0.0.5001',
+          'mocked-private-key',
+        );
+      } finally {
+        spy.mockRestore();
+      }
     });
   });
 });

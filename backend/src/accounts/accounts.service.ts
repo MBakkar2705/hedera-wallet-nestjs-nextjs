@@ -15,6 +15,7 @@ import {
   TransferTransaction,
 } from '@hashgraph/sdk';
 import { TransferHbarDto } from './dto/transfer-hbar.dto';
+import { readPrivateKey } from '../hedera/read-private-key';
 
 @Injectable()
 export class AccountsService {
@@ -103,7 +104,11 @@ export class AccountsService {
     amount,
   }: TransferHbarDto) {
     const senderId = AccountId.fromString(fromAccountId);
-    const senderKey = PrivateKey.fromString(fromPrivateKey);
+    const senderKey = await readPrivateKey(
+      this.client,
+      fromAccountId,
+      fromPrivateKey,
+    );
 
     // The shared client (the operator account) pays the fees, as for the tokens.
     // The HBAR leave the sender's account, so the sender signs the transfer.
