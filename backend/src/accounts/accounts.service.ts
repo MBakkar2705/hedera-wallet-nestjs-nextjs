@@ -3,20 +3,18 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AccountEntity } from './entities/account.entity';
 import {
-  Client,
   AccountCreateTransaction,
-  PrivateKey,
-  PublicKey,
+  AccountId,
+  AccountInfoQuery,
+  Client,
   Hbar,
   HbarUnit,
-} from '@hashgraph/sdk';
-import { AccountInfoQuery } from '@hashgraph/sdk';
-import { TransferHbarDto } from './dto/transfer-hbar.dto';
-import {
-  TransferTransaction,
-  AccountId,
+  PrivateKey,
+  PublicKey,
   TransactionReceipt,
+  TransferTransaction,
 } from '@hashgraph/sdk';
+import { TransferHbarDto } from './dto/transfer-hbar.dto';
 
 @Injectable()
 export class AccountsService {
@@ -27,7 +25,12 @@ export class AccountsService {
     private readonly accountRepo: Repository<AccountEntity>,
   ) {}
 
-  async createAccount(initialBalance: number): Promise<any> {
+  async createAccount(initialBalance: number): Promise<{
+    accountId: string;
+    publicKey: string;
+    privateKey: string;
+    initialBalance: number;
+  }> {
     const privateKey = PrivateKey.generate();
     const publicKey = privateKey.publicKey;
 

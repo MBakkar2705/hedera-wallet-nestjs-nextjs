@@ -11,7 +11,6 @@ import {
   TopicMessageSubmitTransaction,
 } from '@hashgraph/sdk';
 import { MessageEntity } from './entities/message.entity';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 @Injectable()
 export class TopicsService {
@@ -26,12 +25,6 @@ export class TopicsService {
     private readonly client: Client,
   ) {}
 
-  @ApiOperation({ summary: 'Create a new HCS topic on Hedera' })
-  @ApiResponse({ status: 201, description: 'Topic successfully created' })
-  @ApiResponse({
-    status: 400,
-    description: 'Topic creation failed: no topicId returned',
-  })
   async createTopic(
     dto: CreateTopicDto,
   ): Promise<{ topicId: string; memo?: string }> {
@@ -55,15 +48,6 @@ export class TopicsService {
     return { topicId, memo: dto.memo };
   }
 
-  @ApiOperation({ summary: 'Submit a message to an existing HCS topic' })
-  @ApiResponse({
-    status: 201,
-    description: 'Message successfully submitted and persisted',
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Message submission failed (invalid topic or Hedera error)',
-  })
   async sendMessage(
     topicId: string,
     dto: SendMessageDto,
@@ -97,12 +81,7 @@ export class TopicsService {
       createdAt,
     };
   }
-  @ApiOperation({ summary: 'Retrieve all messages for a given HCS topic' })
-  @ApiResponse({
-    status: 200,
-    description:
-      'Messages retrieved from local persistence (an empty list when the topic has no message)',
-  })
+
   getMessages(topicId: string): Promise<MessageEntity[]> {
     // A topic without message gives an empty list, not an error.
     return this.messageRepo.find({
