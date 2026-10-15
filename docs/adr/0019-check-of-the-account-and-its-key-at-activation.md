@@ -2,6 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-10-14
+- Note (2026-10-15): The backend now reads a private key of 64 hexadecimal characters with the type of the account, as the frontend does (ADR 0023, item 26 of `docs/backend-evolutions.md`); the difference between the two that this ADR describes is gone. The first item of "Not proven" (the answer `null` in the JSON of the backend) is no longer current: observed by the author on 2026-10-15 with `curl.exe http://localhost:3000/accounts/0.0.11038285`, an account whose key is a list of two keys with a threshold of 1 (ADR 0023): the answer is `{"accountId":"0.0.11038285","hbarBalance":"3 ℏ","tokenAssociations":[],"balance":{"hbar":"3","tinybars":"300000000"},"tokens":[],"key":null}`. The third item of "Not proven" (the activation of the Ed25519 account with the key as 64 hexadecimal characters, after the check of the text was added) is no longer current: observed by the author on 2026-10-15, `0.0.11035637` was activated with its key as 64 hexadecimal characters (taken from its DER form) and sent 1 ℏ (`SUCCESS`).
 
 ## Context
 

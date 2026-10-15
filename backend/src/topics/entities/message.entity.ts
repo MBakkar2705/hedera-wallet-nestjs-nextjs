@@ -5,7 +5,7 @@ import {
   CreateDateColumn,
 } from 'typeorm';
 
-@Entity('message_entity')
+@Entity('messages')
 export class MessageEntity {
   @PrimaryGeneratedColumn()
   id!: number;

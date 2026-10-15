@@ -8,7 +8,8 @@ export class TransferHbarDto {
 
   @ApiProperty({
     example: '302e020100300506032b657004220420...',
-    description: 'Sender private key',
+    description:
+      'Sender private key: DER, or 64 hexadecimal characters (the key type is then read from the account on Hedera)',
   })
   @IsString()
   fromPrivateKey!: string;

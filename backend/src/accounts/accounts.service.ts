@@ -3,20 +3,19 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AccountEntity } from './entities/account.entity';
 import {
-  Client,
   AccountCreateTransaction,
-  PrivateKey,
-  PublicKey,
+  AccountId,
+  AccountInfoQuery,
+  Client,
   Hbar,
   HbarUnit,
-} from '@hashgraph/sdk';
-import { AccountInfoQuery } from '@hashgraph/sdk';
-import { TransferHbarDto } from './dto/transfer-hbar.dto';
-import {
-  TransferTransaction,
-  AccountId,
+  PrivateKey,
+  PublicKey,
   TransactionReceipt,
+  TransferTransaction,
 } from '@hashgraph/sdk';
+import { TransferHbarDto } from './dto/transfer-hbar.dto';
+import { readPrivateKey } from '../hedera/read-private-key';
 
 @Injectable()
 export class AccountsService {
@@ -27,7 +26,12 @@ export class AccountsService {
     private readonly accountRepo: Repository<AccountEntity>,
   ) {}
 
-  async createAccount(initialBalance: number): Promise<any> {
+  async createAccount(initialBalance: number): Promise<{
+    accountId: string;
+    publicKey: string;
+    privateKey: string;
+    initialBalance: number;
+  }> {
     const privateKey = PrivateKey.generate();
     const publicKey = privateKey.publicKey;
 
@@ -52,7 +56,12 @@ export class AccountsService {
       initialBalance,
     };
 
-    await this.saveAccountLocally(result);
+    // The private key is returned to the caller and never stored.
+    await this.saveAccountLocally({
+      accountId,
+      publicKey: result.publicKey,
+      initialBalance,
+    });
 
     return result;
   }
@@ -95,7 +104,11 @@ export class AccountsService {
     amount,
   }: TransferHbarDto) {
     const senderId = AccountId.fromString(fromAccountId);
-    const senderKey = PrivateKey.fromString(fromPrivateKey);
+    const senderKey = await readPrivateKey(
+      this.client,
+      fromAccountId,
+      fromPrivateKey,
+    );
 
     // The shared client (the operator account) pays the fees, as for the tokens.
     // The HBAR leave the sender's account, so the sender signs the transfer.
@@ -120,7 +133,6 @@ export class AccountsService {
   private async saveAccountLocally(data: {
     accountId: string;
     publicKey: string;
-    privateKey: string;
     initialBalance: number;
   }) {
     const account = this.accountRepo.create(data);

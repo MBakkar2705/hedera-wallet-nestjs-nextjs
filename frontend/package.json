@@ -6,7 +6,9 @@
     "dev": "next dev -p 3001",
     "build": "next build",
     "start": "next start -p 3001",
-    "lint": "eslint"
+    "lint": "eslint",
+    "format": "prettier --write \"{app,components,lib}/**/*.{ts,tsx,css}\" \"*.{ts,mjs}\"",
+    "format:check": "prettier --check \"{app,components,lib}/**/*.{ts,tsx,css}\" \"*.{ts,mjs}\""
   },
   "dependencies": {
     "@hashgraph/sdk": "^2.68.0",
@@ -21,6 +23,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.4.0",
+    "prettier": "^3.9.10",
     "tailwindcss": "^4",
     "typescript": "^5"
   },

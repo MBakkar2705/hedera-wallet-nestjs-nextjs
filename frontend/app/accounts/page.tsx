@@ -180,8 +180,8 @@ export default function AccountsPage() {
                 warning="Copying puts the key in the clipboard, which other programs and the Windows clipboard history can read."
               />
               <p className="text-sm text-muted">
-                The key is kept in this page&apos;s memory only. It is lost
-                when you reload or hide it.
+                The key is kept in this page&apos;s memory only. It is lost when
+                you reload or hide it.
               </p>
               <div className="flex flex-wrap gap-3">
                 <Button

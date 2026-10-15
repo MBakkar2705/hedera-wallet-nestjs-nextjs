@@ -4,16 +4,10 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { getDatabasePath } from './config';
-//import { AccountEntity } from './accounts/entities/account.entity';
-//import { TokenEntity } from './tokens/entities/token.entity';
 import { AccountsModule } from './accounts/accounts.module';
 import { TokensModule } from './tokens/tokens.module';
 import { TopicsModule } from './topics/topics.module';
-//import { Client } from '@hashgraph/sdk';
-//import { AssociationEntity } from './tokens/entities/association.entity';
-//import { TopicEntity } from './topics/entities/topic.entity';
 import { HederaModule } from './hedera/hedera.module';
-//import { MessageEntity } from './topics/entities/message.entity';
 
 @Module({
   imports: [
@@ -24,13 +18,6 @@ import { HederaModule } from './hedera/hedera.module';
         type: 'sqlite',
         database: getDatabasePath(),
         autoLoadEntities: true,
-        //      entities: [
-        //        AccountEntity,
-        //       TokenEntity,
-        //        AssociationEntity,
-        //        TopicEntity,
-        //        MessageEntity
-        //      ],
         synchronize: true,
       }),
     }),
@@ -42,8 +29,16 @@ import { HederaModule } from './hedera/hedera.module';
   controllers: [AppController],
   providers: [
     AppService,
-    // Applies the class-validator decorators of the DTOs to every request body.
-    { provide: APP_PIPE, useValue: new ValidationPipe() },
+    // Applies the class-validator decorators of the DTOs to every request body
+    // and query. A property without a decorator is not ignored: the request
+    // gets a 400.
+    {
+      provide: APP_PIPE,
+      useValue: new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+      }),
+    },
   ],
 })
 export class AppModule {}

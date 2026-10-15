@@ -5,7 +5,6 @@ import { Repository } from 'typeorm';
 import {
   Client,
   AccountId,
-  PrivateKey,
   TokenCreateTransaction,
   TokenAssociateTransaction,
   TransferTransaction,
@@ -16,6 +15,7 @@ import { CreateTokenDto } from './dto/create-token.dto';
 import { AssociateTokenDto } from './dto/associate-token.dto';
 import { TransferTokenDto } from './dto/transfer-token.dto';
 import { ListTokensQueryDto } from './dto/list-tokens-query.dto';
+import { readPrivateKey } from '../hedera/read-private-key';
 
 import { TokenEntity } from './entities/token.entity';
 import { AssociationEntity } from './entities/association.entity';
@@ -100,7 +100,7 @@ export class TokensService {
       .setAccountId(AccountId.fromString(accountId))
       .setTokenIds([TokenId.fromString(tokenId)]);
 
-    const key = PrivateKey.fromString(privateKey);
+    const key = await readPrivateKey(this.client, accountId, privateKey);
     const signedTx = await transaction.freezeWith(this.client).sign(key);
 
     const txResponse = await signedTx.execute(this.client);
@@ -134,7 +134,11 @@ export class TokensService {
         amount,
       );
 
-    const key = PrivateKey.fromString(fromPrivateKey);
+    const key = await readPrivateKey(
+      this.client,
+      fromAccountId,
+      fromPrivateKey,
+    );
     const signedTx = await transaction.freezeWith(this.client).sign(key);
 
     const txResponse = await signedTx.execute(this.client);

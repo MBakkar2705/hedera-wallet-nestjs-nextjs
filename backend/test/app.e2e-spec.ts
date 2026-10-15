@@ -6,6 +6,7 @@ import * as path from 'path';
 import * as request from 'supertest';
 import { App } from 'supertest/types';
 import { PrivateKey } from '@hashgraph/sdk';
+import { DataSource } from 'typeorm';
 import { AppModule } from './../src/app.module';
 import { enableAppCors } from './../src/cors';
 
@@ -52,6 +53,33 @@ describe('AppController (e2e)', () => {
 
   it('uses the database file given by DATABASE_PATH', () => {
     expect(fs.existsSync(process.env.DATABASE_PATH as string)).toBe(true);
+  });
+
+  it('creates the tables with the expected names', async () => {
+    const dataSource = app.get(DataSource);
+    const rows = await dataSource.query<{ name: string }[]>(
+      "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name",
+    );
+
+    expect(rows.map((row) => row.name)).toEqual([
+      'accounts',
+      'associations',
+      'messages',
+      'token_transfers',
+      'tokens',
+      'topics',
+    ]);
+  });
+
+  it('keeps no column for a private key in the accounts table', async () => {
+    const dataSource = app.get(DataSource);
+    const columns = await dataSource.query<{ name: string }[]>(
+      "SELECT name FROM pragma_table_info('accounts') ORDER BY cid",
+    );
+    const names = columns.map((column) => column.name);
+
+    expect(names).toContain('accountId');
+    expect(names).not.toContain('privateKey');
   });
 
   it('/ (GET) sends the configured CORS origin, and never another one', async () => {
@@ -101,6 +129,16 @@ describe('AppController (e2e)', () => {
     expect(response.status).toBe(400);
     const body = response.body as { message: string[] };
     expect(body.message).toContain('initialBalance must not be less than 0');
+  });
+
+  it('/accounts (POST) rejects a property that is not in the DTO with 400', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/accounts')
+      .send({ initialBalance: -1, extra: 'x' });
+
+    expect(response.status).toBe(400);
+    const body = response.body as { message: string[] };
+    expect(body.message).toContain('property extra should not exist');
   });
 
   // The query is checked before any read of the database or call to Hedera.

@@ -7,6 +7,7 @@ import { TokenTransferEntity } from './entities/token-transfer.entity';
 import { CreateTokenDto } from './dto/create-token.dto';
 import { AssociateTokenDto } from './dto/associate-token.dto';
 import { TransferTokenDto } from './dto/transfer-token.dto';
+import * as readPrivateKeyModule from '../hedera/read-private-key';
 
 jest.mock('@hashgraph/sdk', () => {
   const mockExecuteCreate = jest.fn().mockResolvedValue({
@@ -227,6 +228,26 @@ describe('TokensService – full stable test', () => {
     });
   });
 
+  it('should read the key with the account that is associated', async () => {
+    const spy = jest.spyOn(readPrivateKeyModule, 'readPrivateKey');
+
+    try {
+      await service.associateToken({
+        accountId: '0.0.5001',
+        privateKey: 'mocked-private-key',
+        tokenId: '0.0.9999',
+      });
+
+      expect(spy).toHaveBeenCalledWith(
+        mockClient,
+        '0.0.5001',
+        'mocked-private-key',
+      );
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
   it('should throw if token association status is not SUCCESS', async () => {
     jest
       .mocked(require('@hashgraph/sdk').TokenAssociateTransaction)
@@ -299,6 +320,28 @@ describe('TokensService – full stable test', () => {
       transactionId: 'tx-mocked',
     });
   });
+  it('should read the key with the account of the sender', async () => {
+    const spy = jest.spyOn(readPrivateKeyModule, 'readPrivateKey');
+
+    try {
+      await service.transferToken({
+        fromAccountId: '0.0.5001',
+        fromPrivateKey: 'mocked-private-key',
+        toAccountId: '0.0.5002',
+        tokenId: '0.0.9999',
+        amount: 42,
+      });
+
+      expect(spy).toHaveBeenCalledWith(
+        mockClient,
+        '0.0.5001',
+        'mocked-private-key',
+      );
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
   it('should throw if token transfer status is not SUCCESS', async () => {
     jest
       .mocked(require('@hashgraph/sdk').TransferTransaction)

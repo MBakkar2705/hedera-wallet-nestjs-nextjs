@@ -92,7 +92,7 @@ Frontend:
 | Backend and frontend in sibling folders         | Done        |
 | Backend lint and format (ESLint, Prettier)      | Done        |
 | Backend end-to-end test (supertest)             | Done        |
-| CI: backend tests, lint, format check, e2e and build; frontend lint and build | Done        |
+| CI: backend tests, lint, format check, e2e and build; frontend lint, format check and build | Done        |
 
 ---
 
@@ -132,6 +132,8 @@ In AccountsService, we implemented `createAccount`, leveraging @hashgraph/sdk to
 - generate a key pair,
 - send an AccountCreateTransaction with the given initialBalance,
 - retrieve the receipt and return { accountId, publicKey, privateKey, initialBalance }.  
+
+The private key is returned once and is not stored (see [ADR 0022](docs/adr/0022-private-key-returned-once-and-not-stored.md)).  
 
 We exposed this logic through a POST /accounts endpoint in AccountsController.  
 Environment variables are loaded from .env using dotenv/config.  
@@ -217,7 +219,7 @@ Sample response:
 Outcome:
 
 A new Hedera account was successfully created with an initial balance of 10 HBAR.
-The account credentials (ID + key pair) are returned and persisted locally in the SQLite Database.
+The account credentials (ID + key pair) are returned. The account ID, the public key and the initial balance are saved locally in the SQLite database; the private key is returned once and never stored, so the caller must keep it (see [ADR 0022](docs/adr/0022-private-key-returned-once-and-not-stored.md)).
 
 - Stored via the AccountEntity in hedera-wallet.db
 - Inspected visually in the hedera-wallet.db on Visual Code : table accounts
@@ -321,7 +323,7 @@ Service logic:
 Required DTO fields:
 
 - fromAccountId: string
-- fromPrivateKey: string
+- fromPrivateKey: string (DER, or 64 hexadecimal characters; for 64 characters the backend reads the type of the account on Hedera first, see [ADR 0023](docs/adr/0023-private-key-read-with-the-type-of-the-account.md))
 - toAccountId: string
 - amount: number (≥ 1)
 
@@ -342,8 +344,7 @@ Sample response:
 Outcome:
 
 1 HBAR was successfully transferred from account 0.0.10937780 to account 0.0.10937901. The values above are the ones displayed by the frontend transfer screen, and the balance of the recipient went from 1 to 2 HBAR.
-The transaction was finalized on the Hedera testnet and logged in the TransferEntity table in hedera-wallet.db
-It can be inspected via VS Code SQLite Viewer in the transfer_entity table
+The transaction was finalized on the Hedera testnet. HBAR transfers are not stored in the local database (there is no table for them; the token transfers are stored in the table `token_transfers`).
 
 Since 2026-10-13 the response also contains `value` and `unit`, next to `amount`, see [ADR 0015](docs/adr/0015-structured-amounts-and-token-balances.md). Observed through Swagger on the running backend with a transfer of 1 HBAR (the account IDs and the transaction ID are replaced by examples): HTTP 201 (Swagger documented 200 before, and showed this 201 as undocumented; the documentation now says 201) and
 
@@ -461,7 +462,7 @@ Service logic:
 Required DTO fields:
 
 - accountId: string
-- privateKey: string
+- privateKey: string (DER, or 64 hexadecimal characters, read with the type of the account as above)
 - tokenId: string
 
 Test command:
@@ -512,7 +513,7 @@ Service logic:
 Required DTO fields:
 
 - fromAccountId: string
-- fromPrivateKey: string
+- fromPrivateKey: string (DER, or 64 hexadecimal characters, read with the type of the account as above)
 - toAccountId: string
 - tokenId: string
 - amount: number (≥ 0)
@@ -582,7 +583,7 @@ Sample response:
 
 Outcome:
 
-A new HCS topic is created on Hedera testnet and persisted in the topic_entity table which is viewable in VS Code’s SQLite Viewer.
+A new HCS topic is created on Hedera testnet and persisted in the `topics` table which is viewable in VS Code’s SQLite Viewer.
 
 ---
 
@@ -631,7 +632,7 @@ Sample response:
 
 Outcome: 
 
-A message was successfully sent to Hedera topic 0.0.6381812, and a copy was stored in the message_entity table of the SQLite database (hedera-wallet.db), confirming persistence.
+A message was successfully sent to Hedera topic 0.0.6381812, and a copy was stored in the `messages` table of the SQLite database (hedera-wallet.db), confirming persistence.
 
 ---
 
@@ -686,7 +687,7 @@ Sample response :
 
 Outcome:
 
-Messages previously submitted to Hedera topic 0.0.6850099 were successfully retrieved from the message_entity table in the SQLite database (hedera-wallet.db). This confirms both persistence and retrievability via public API.
+Messages previously submitted to Hedera topic 0.0.6850099 were successfully retrieved from the `messages` table in the SQLite database (hedera-wallet.db). This confirms both persistence and retrievability via public API.
 
 Empty result: for a topic ID with no stored message (for example 0.0.9999999), the endpoint returns HTTP 200 with `[]`. This was observed with curl on 2026-10-12, and on the /topics page of the frontend, which shows "0 messages" and a short text. Before this change, the same request returned HTTP 500 with the message "Internal server error", and the page showed an error.
 
@@ -746,20 +747,23 @@ Entities are defined using TypeORM decorators and synchronized on startup.
 
 ### Current Entities
 
-| Entity               | Purpose                                                       |
-|----------------------|----------------------------------------------------------------|
-| AccountEntity        | Stores created Hedera accounts locally                        |
-| TokenEntity          | Stores created HTS fungible tokens                            |
-| AssociationEntity    | Tracks token associations per account                         |
-| TransferEntity       | Logs native HBAR transfers                                    |
-| TokenTransferEntity  | Persists HTS token transfers executed via API                 |
-| TopicEntity          | Stores created HCS topics                                     |
-| MessageEntity        | Stores messages published to HCS topics                       |
+| Entity               | Table             | Purpose                                                                  |
+|----------------------|-------------------|--------------------------------------------------------------------------|
+| AccountEntity        | `accounts`        | Stores created Hedera accounts locally (ID, public key, initial balance; never the private key) |
+| TokenEntity          | `tokens`          | Stores created HTS fungible tokens                                       |
+| AssociationEntity    | `associations`    | Tracks token associations per account                                    |
+| TokenTransferEntity  | `token_transfers` | Persists HTS token transfers executed via API                            |
+| TopicEntity          | `topics`          | Stores created HCS topics                                                |
+| MessageEntity        | `messages`        | Stores messages published to HCS topics                                  |
+
+HBAR transfers are not stored. The table names were made consistent on 2026-10-15 (see [ADR 0021](docs/adr/0021-explicit-table-names-and-a-new-database.md)); they were `topic_entity`, `message_entity` and `token_transfer_entity` before.
 
 ### Storage Location 
  
 The database file is located at:  
 backend/hedera-wallet.db
+
+A database file created before 2026-10-15 has the old table names and still holds the private keys of the accounts that were created (until then they were stored in clear). With `synchronize: true`, TypeORM does not rename a table, so rename or delete such a file before starting the backend; it is then created again (see [ADR 0021](docs/adr/0021-explicit-table-names-and-a-new-database.md) and [ADR 0022](docs/adr/0022-private-key-returned-once-and-not-stored.md)). The files `*.db` are ignored by Git and by Docker.
 
 ### Configuration  
 
@@ -783,7 +787,6 @@ After creating a Hedera account via the SDK, the account is stored locally:
 await this.accountRepo.save({
   accountId: '0.0.123456',
   publicKey: '...',
-  privateKey: '...',
   initialBalance: 1000
 });
 
@@ -923,9 +926,9 @@ pnpm --filter backend format        // Prettier rewrites the files
 
 pnpm --filter backend test:e2e      // End-to-end test
 
-The end-to-end test is `backend/test/app.e2e-spec.ts`. It starts the application module, checks the response of `GET /`, checks the CORS header and a preflight request, and checks that two invalid request bodies and one invalid query (`GET /tokens?limit=500`) are refused with a 400 (the body or the query is checked before any call to Hedera). It sets throwaway Hedera credentials itself (a key generated at each run), so no `.env` file is needed to run it. It uses a throwaway database file in the temporary folder of the system (`DATABASE_PATH`, set at the start of the test and removed at the end; the removal was not checked by hand), so the test no longer opens `hedera-wallet.db`. Observed (2026-10-13): the last modification time of `backend/hedera-wallet.db` did not change after `pnpm test` and `pnpm --filter backend test:e2e`. The Hedera clients are closed when the application closes: without that, Jest did not exit (observed).
+The end-to-end test is `backend/test/app.e2e-spec.ts`. It starts the application module, checks the response of `GET /`, checks the CORS header and a preflight request, and checks that two invalid request bodies, one invalid query (`GET /tokens?limit=500`) and one property that is not in the DTO are refused with a 400 (the body or the query is checked before any call to Hedera), and checks in its throwaway database that the tables are exactly `accounts`, `associations`, `messages`, `token_transfers`, `tokens` and `topics` and that `accounts` has no `privateKey` column. It sets throwaway Hedera credentials itself (a key generated at each run), so no `.env` file is needed to run it. It uses a throwaway database file in the temporary folder of the system (`DATABASE_PATH`, set at the start of the test and removed at the end; the removal was not checked by hand), so the test no longer opens `hedera-wallet.db`. Observed (2026-10-13): the last modification time of `backend/hedera-wallet.db` did not change after `pnpm test` and `pnpm --filter backend test:e2e`. The Hedera clients are closed when the application closes: without that, Jest did not exit (observed).
 
-There is no frontend test script yet. The frontend is checked by `pnpm --filter frontend lint`, `pnpm --filter frontend build` and by hand in a browser. The CI runs the lint and the build.
+There is no frontend test script yet. The frontend is checked by `pnpm --filter frontend lint`, `pnpm --filter frontend format:check` (Prettier with its default style, `pnpm --filter frontend format` rewrites the files), `pnpm --filter frontend build` and by hand in a browser. The CI runs the lint, the format check and the build.
 
 Tests will be structured per service using .spec.ts files under `backend/src/`.
 Coverage confirms execution paths for each feature listed
@@ -1025,7 +1028,7 @@ pnpm run test
 Outcome: 
 
 5 unit tests passed successfully. The service behavior is reproducible and stable in isolation. Only errors explicitly handled in code are covered.
-The HTS token transfer via the API is also stored locally in SQLite via TokenTranferEntity table.
+The HTS token transfer via the API is also stored locally in SQLite in the `token_transfers` table.
 
 Coverage:
 
@@ -1125,11 +1128,11 @@ The following endpoints — POST /accounts, GET /accounts/:accountId, and POST /
 
 - DTO fields annotated with @ApiProperty() for Swagger schema generation
 
-- Integrated with class-validator for runtime payload validation (@IsString(), @IsInt(), @Min(0))
+- Integrated with class-validator for runtime payload validation (@IsString(), @IsInt(), @Min(0)). The global pipe also refuses a property that is not in the DTO, in a body or in a query, with HTTP 400 and `property <name> should not exist` (see the note of 2026-10-15 in [ADR 0014](docs/adr/0014-global-filter-for-hedera-errors.md))
 
 All returned responses expose consistent fields:
 
-- Creation: accountId, publicKey, privateKey, initialBalance
+- Creation: accountId, publicKey, privateKey (returned once, not stored), initialBalance
 - Info retrieval: accountId, hbarBalance, tokenAssociations, balance, tokens, key
 - HBAR transfer: status, transactionId, from, to, amount, value, unit
 
@@ -1143,7 +1146,7 @@ This section enables:
 - Form-based interaction for creating accounts and sending HBAR
 - Path-based queries for checking balance and status
 - Runtime validation via DTO schemas and class-validator rules
-- Backed by SQLite persistence in AccountEntity and TransferEntity
+- Backed by SQLite persistence in AccountEntity (HBAR transfers are not stored)
 
 ### Tokens Module Coverage:
 
@@ -1259,7 +1262,7 @@ docker run --rm --init -p 3000:3000 --env-file backend/.env hedera-wallet
 
 Without these variables, the application exits at startup. The `--init` option is needed for Ctrl+C to stop the container. Without it, Ctrl+C had no effect after about 30 seconds and `docker stop` took about 10 seconds; with it, Ctrl+C stopped the container in about 2 seconds (all observed). In the Nest log, the application is process 1 without `--init` and process 7 with it. The cause was not tested separately.
 
-The GitHub Actions workflow (.github/workflows/ci.yml) installs dependencies with pnpm, runs the backend tests (`pnpm test`), the backend lint, the backend format check, the backend end-to-end test and the backend build, then the lint and the build of the frontend, on every push and pull request.
+The GitHub Actions workflow (.github/workflows/ci.yml) installs dependencies with pnpm, runs the backend tests (`pnpm test`), the backend lint, the backend format check, the backend end-to-end test and the backend build, then the lint, the format check and the build of the frontend, on every push and pull request.
 
 ---
 
@@ -1275,6 +1278,7 @@ The backend evolutions listed in [docs/backend-evolutions.md](docs/backend-evolu
 | Configuration     | CORS origin, port and database path read from environment variables, one operator account and one shared Hedera client (the operator pays every operation, HBAR transfers included), end-to-end test isolated from the local database | 9, 10, 24 | 0017 |
 | Strict TypeScript | `strict: true` in the backend, with `!` on the 75 properties of the entities and DTO that a library fills; the CI builds the backend | 16, 25 | 0018 |
 | Frontend CSP      | An account is checked when it is activated (`GET /accounts/:accountId` also returns its public key, and the frontend checks in the browser that the typed private key belongs to it); the lookup button is named Get info; every page carries a Content Security Policy with a nonce for each request | 19 | 0019, 0020 |
+| Hygiene and security | Tables named `topics`, `messages` and `token_transfers` (a new database, no migration), the private key of a created account returned once and no longer stored, a private key of 64 hexadecimal characters read with the type of the account, dead code removed, a ValidationPipe that refuses unknown properties, a Prettier check for the frontend | 17, 18, 26, 27, 28, 29 | 0021, 0022, 0023 |
 
 ---
 
@@ -1312,6 +1316,9 @@ The records are numbered in the order of the project: first the backend, then th
 - [ADR 0018: TypeScript strict mode in the backend, with `!` on the properties filled by a library](docs/adr/0018-typescript-strict-mode-in-the-backend.md)
 - [ADR 0019: Check of the account and of its key when an account is activated](docs/adr/0019-check-of-the-account-and-its-key-at-activation.md)
 - [ADR 0020: Content Security Policy with a nonce for each request](docs/adr/0020-content-security-policy-with-a-nonce.md)
+- [ADR 0021: Explicit names for the tables, and a new database instead of a migration](docs/adr/0021-explicit-table-names-and-a-new-database.md)
+- [ADR 0022: The private key of a created account is returned once and not stored](docs/adr/0022-private-key-returned-once-and-not-stored.md)
+- [ADR 0023: A private key of 64 hexadecimal characters is read with the type of the account](docs/adr/0023-private-key-read-with-the-type-of-the-account.md)
 
 The records were renumbered to follow this order. Earlier commit messages use the former numbers: former 0001 is now 0009, 0002 is 0008, 0003 is 0007, 0005 is 0010, 0006 is 0011 and 0007 is 0012. The former 0008 to 0012 were never committed under those numbers. ADR 0004 keeps its number.
 
