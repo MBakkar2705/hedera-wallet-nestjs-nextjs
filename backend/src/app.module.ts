@@ -29,8 +29,16 @@ import { HederaModule } from './hedera/hedera.module';
   controllers: [AppController],
   providers: [
     AppService,
-    // Applies the class-validator decorators of the DTOs to every request body.
-    { provide: APP_PIPE, useValue: new ValidationPipe() },
+    // Applies the class-validator decorators of the DTOs to every request body
+    // and query. A property without a decorator is not ignored: the request
+    // gets a 400.
+    {
+      provide: APP_PIPE,
+      useValue: new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+      }),
+    },
   ],
 })
 export class AppModule {}

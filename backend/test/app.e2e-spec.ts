@@ -131,6 +131,16 @@ describe('AppController (e2e)', () => {
     expect(body.message).toContain('initialBalance must not be less than 0');
   });
 
+  it('/accounts (POST) rejects a property that is not in the DTO with 400', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/accounts')
+      .send({ initialBalance: -1, extra: 'x' });
+
+    expect(response.status).toBe(400);
+    const body = response.body as { message: string[] };
+    expect(body.message).toContain('property extra should not exist');
+  });
+
   // The query is checked before any read of the database or call to Hedera.
   it('/tokens (GET) rejects a limit above 100 with 400', async () => {
     const response = await request(app.getHttpServer()).get(
