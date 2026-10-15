@@ -71,6 +71,17 @@ describe('AppController (e2e)', () => {
     ]);
   });
 
+  it('keeps no column for a private key in the accounts table', async () => {
+    const dataSource = app.get(DataSource);
+    const columns = await dataSource.query<{ name: string }[]>(
+      "SELECT name FROM pragma_table_info('accounts') ORDER BY cid",
+    );
+    const names = columns.map((column) => column.name);
+
+    expect(names).toContain('accountId');
+    expect(names).not.toContain('privateKey');
+  });
+
   it('/ (GET) sends the configured CORS origin, and never another one', async () => {
     const allowed = await request(app.getHttpServer())
       .get('/')

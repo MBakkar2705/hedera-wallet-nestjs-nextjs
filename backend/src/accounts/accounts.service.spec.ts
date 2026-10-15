@@ -142,7 +142,12 @@ describe('AccountsService', () => {
         initialBalance: 10,
       });
 
-      expect(mockRepo.create).toHaveBeenCalledWith(result);
+      // The private key is in the response, but it is not saved.
+      expect(mockRepo.create).toHaveBeenCalledWith({
+        accountId: '0.0.9999999',
+        publicKey: 'mocked-public-key',
+        initialBalance: 10,
+      });
       expect(mockRepo.save).toHaveBeenCalled();
     });
 

@@ -55,7 +55,12 @@ export class AccountsService {
       initialBalance,
     };
 
-    await this.saveAccountLocally(result);
+    // The private key is returned to the caller and never stored.
+    await this.saveAccountLocally({
+      accountId,
+      publicKey: result.publicKey,
+      initialBalance,
+    });
 
     return result;
   }
@@ -123,7 +128,6 @@ export class AccountsService {
   private async saveAccountLocally(data: {
     accountId: string;
     publicKey: string;
-    privateKey: string;
     initialBalance: number;
   }) {
     const account = this.accountRepo.create(data);

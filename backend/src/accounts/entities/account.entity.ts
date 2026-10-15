@@ -11,9 +11,6 @@ export class AccountEntity {
   @Column()
   publicKey!: string;
 
-  @Column()
-  privateKey!: string;
-
   @Column({ type: 'integer', default: 0 })
   initialBalance!: number;
 
