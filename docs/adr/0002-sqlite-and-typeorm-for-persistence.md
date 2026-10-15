@@ -2,6 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-10-09
+- Note (2026-10-15): The tables were renamed (ADR 0021): `topics`, `messages` and `token_transfers` replace `topic_entity`, `message_entity` and `token_transfer_entity`, and the table `accounts` no longer has a column `privateKey` (ADR 0022). The first item of "Proven" is out of date: `transfer_entity` is not a table of this application (no entity has that name in the code, and the file of the author, read by the assistant in read-only mode on 2026-10-15, had no such table). That file had `accounts`, `associations`, `tokens`, `topic_entity`, `message_entity` and `token_transfer_entity`. Observed on 2026-10-15 (ADR 0021): the new file has `accounts`, `associations`, `messages`, `token_transfers`, `tokens` and `topics`, and the application wrote rows in each of them.
 
 ## Context
 

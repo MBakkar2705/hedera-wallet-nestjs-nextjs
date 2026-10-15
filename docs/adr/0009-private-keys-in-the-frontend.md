@@ -3,6 +3,7 @@
 - Status: Accepted
 - Date: 2026-10-08
 - Note (2026-10-09): written while the frontend was being added; it has four screens now (see ADR 0010 and ADR 0011). The `src/` paths below are `backend/src/` since ADR 0012.
+- Note (2026-10-15): The backend no longer stores the private key of the account that it creates: the column `privateKey` of the table `accounts` was removed, and `POST /accounts` still returns the key once (ADR 0022). The backend still receives a key in the body of the requests that sign; since the same date it reads a key of 64 hexadecimal characters with the type of the account (ADR 0023).
 
 ## Context
 
