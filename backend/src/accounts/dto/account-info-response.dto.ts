@@ -29,6 +29,22 @@ export class AccountTokenDto {
   balance!: string;
 }
 
+export class AccountKeyDto {
+  @ApiProperty({
+    enum: ['ED25519', 'secp256k1'],
+    example: 'ED25519',
+    description: 'Type of the public key of the account',
+  })
+  type!: string;
+
+  @ApiProperty({
+    example: '4a5b6c7d8e9f00112233445566778899aabbccddeeff00112233445566778899',
+    description:
+      'Public key as raw hexadecimal (not DER). A client can compare it with the public key computed from a private key.',
+  })
+  publicKey!: string;
+}
+
 export class AccountInfoResponseDto {
   @ApiProperty({ example: '0.0.10936687', description: 'Hedera account ID' })
   accountId!: string;
@@ -56,4 +72,12 @@ export class AccountInfoResponseDto {
     description: 'Associated tokens, with their symbol and the account balance',
   })
   tokens!: AccountTokenDto[];
+
+  @ApiProperty({
+    type: AccountKeyDto,
+    nullable: true,
+    description:
+      'Public key of the account when it is a single key, so that a client can check that a private key belongs to the account. null when the key is a list of keys, a threshold key or a contract key.',
+  })
+  key!: AccountKeyDto | null;
 }

@@ -59,3 +59,7 @@ ADR 0009 decided that the user enters a private key explicitly and that the fron
 - The HTTP status of the `transfer` request in the Network tab was not reported.
 - That nothing stores the key: the browser storage was not inspected, and the Network and console logs were not searched for the key.
 - Protection against scripts in the page: no Content Security Policy exists.
+
+## Note of 2026-10-15
+
+A Content Security Policy now exists: see [ADR 0020](0020-content-security-policy-with-a-nonce.md). The sentences above that say no policy is configured describe the state of 2026-10-08. The other limits of this record are unchanged: a script that runs in the page can still read the active key.

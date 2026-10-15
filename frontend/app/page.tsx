@@ -5,7 +5,7 @@ const sections = [
   {
     href: "/accounts",
     title: "Accounts",
-    text: "Create an account, check a balance, choose the account that signs.",
+    text: "Create an account, look up an account, choose the account that signs.",
     first: true,
   },
   {

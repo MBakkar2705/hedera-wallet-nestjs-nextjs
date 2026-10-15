@@ -22,6 +22,13 @@ export interface AccountToken {
   balance: string;
 }
 
+export interface AccountKey {
+  // "ED25519" or "secp256k1".
+  type: string;
+  // The public key as raw hexadecimal (not DER).
+  publicKey: string;
+}
+
 export interface AccountInfo {
   accountId: string;
   // Already formatted by the backend: the amount followed by the HBAR symbol.
@@ -31,6 +38,9 @@ export interface AccountInfo {
   tokenAssociations: string[];
   balance: AccountBalance;
   tokens: AccountToken[];
+  // null when the key of the account is not a single key (a list of keys,
+  // a threshold key or a contract key).
+  key: AccountKey | null;
 }
 
 // Hedera account IDs look like 0.0.123456.

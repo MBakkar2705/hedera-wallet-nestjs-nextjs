@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ActiveAccountProvider } from "@/lib/active-account";
@@ -19,7 +20,12 @@ export const metadata: Metadata = {
   description: "Hedera testnet demo wallet",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // The Content Security Policy (proxy.ts) has a new nonce for each request.
+  // A page built once cannot carry it, so the pages are rendered for each
+  // request.
+  await connection();
+
   return (
     <html
       lang="en"

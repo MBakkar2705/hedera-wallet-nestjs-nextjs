@@ -27,7 +27,7 @@ export class AccountsController {
   }
 
   @Get(':accountId')
-  @ApiOperation({ summary: 'Get Hedera account info (balance + tokens)' })
+  @ApiOperation({ summary: 'Get Hedera account info (balance, tokens, key)' })
   @ApiParam({
     name: 'accountId',
     type: String,

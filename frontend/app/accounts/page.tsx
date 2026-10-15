@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { getErrorMessage } from "@/lib/api";
+import { ApiError, getErrorMessage } from "@/lib/api";
 import {
   ACCOUNT_ID_PATTERN,
   createAccount,
@@ -9,6 +9,7 @@ import {
   type AccountInfo,
   type CreatedAccount,
 } from "@/lib/accounts";
+import { checkPrivateKey } from "@/lib/account-key";
 import {
   INACTIVITY_LIMIT_MINUTES,
   useActiveAccount,
@@ -38,6 +39,7 @@ export default function AccountsPage() {
   const [activateIdInput, setActivateIdInput] = useState("");
   const [activateKeyInput, setActivateKeyInput] = useState("");
   const [activateError, setActivateError] = useState<string | null>(null);
+  const [activating, setActivating] = useState(false);
 
   async function handleCreate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -85,7 +87,7 @@ export default function AccountsPage() {
     }
   }
 
-  function handleActivate(event: FormEvent<HTMLFormElement>) {
+  async function handleActivate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const accountId = activateIdInput.trim();
@@ -99,17 +101,50 @@ export default function AccountsPage() {
       return;
     }
 
-    activate({ accountId, privateKey });
+    setActivating(true);
     setActivateError(null);
-    // The key must not stay in the form once it is in the active account.
-    setActivateKeyInput("");
+    try {
+      // The account must exist: the backend answers 404 for an unknown one.
+      const info = await getAccount(accountId);
+
+      // The key is checked here, in the browser: it is not sent for this.
+      if (info.key === null) {
+        setActivateError(
+          "The key of this account is not a single key. This application signs with one key only.",
+        );
+        return;
+      }
+      const check = await checkPrivateKey(privateKey, info.key);
+      if (check === "unreadable") {
+        setActivateError(
+          "The private key cannot be read. Enter its 64 hexadecimal characters, or its DER form.",
+        );
+        return;
+      }
+      if (check === "mismatch") {
+        setActivateError("This private key does not belong to this account.");
+        return;
+      }
+
+      activate({ accountId, privateKey });
+      // The key must not stay in the form once it is in the active account.
+      setActivateKeyInput("");
+    } catch (error) {
+      setActivateError(
+        error instanceof ApiError && error.status === 404
+          ? "This account does not exist on the Hedera testnet."
+          : getErrorMessage(error),
+      );
+    } finally {
+      setActivating(false);
+    }
   }
 
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-10 px-6 py-10">
       <PageHeader
         title="Accounts"
-        description="Create a testnet account, check a balance, and choose the account that signs your transactions."
+        description="Create a testnet account, look up an account, and choose the account that signs your transactions."
       />
 
       <PanelList>
@@ -180,7 +215,7 @@ export default function AccountsPage() {
               />
             </Field>
             <Button type="submit" disabled={lookingUp}>
-              {lookingUp ? "Searching..." : "Get balance"}
+              {lookingUp ? "Searching..." : "Get info"}
             </Button>
           </form>
 
@@ -199,6 +234,16 @@ export default function AccountsPage() {
                   {info.tokens.length}
                 </dd>
               </dl>
+              {info.key ? (
+                <CodeValue
+                  label={`Public key (${info.key.type})`}
+                  value={info.key.publicKey}
+                />
+              ) : (
+                <p className="text-sm text-muted">
+                  The key of this account is not a single key.
+                </p>
+              )}
               {info.tokens.length > 0 && (
                 <ul className="max-h-64 divide-y divide-line overflow-y-auto">
                   {info.tokens.map((token) => (
@@ -249,7 +294,9 @@ export default function AccountsPage() {
                 onChange={(event) => setActivateKeyInput(event.target.value)}
               />
             </Field>
-            <Button type="submit">Use this account</Button>
+            <Button type="submit" disabled={activating}>
+              {activating ? "Checking..." : "Use this account"}
+            </Button>
           </form>
 
           {activateError && <Callout tone="danger">{activateError}</Callout>}

@@ -6,6 +6,7 @@ import {
   Client,
   AccountCreateTransaction,
   PrivateKey,
+  PublicKey,
   Hbar,
   HbarUnit,
 } from '@hashgraph/sdk';
@@ -78,6 +79,12 @@ export class AccountsService {
         symbol: rel.symbol,
         balance: rel.balance.toString(),
       })),
+      // Only a single public key can be compared with a private key.
+      // A list of keys, a threshold key or a contract key gives null.
+      key:
+        info.key instanceof PublicKey
+          ? { type: info.key.type, publicKey: info.key.toStringRaw() }
+          : null,
     };
   }
 
