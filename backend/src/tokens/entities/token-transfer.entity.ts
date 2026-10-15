@@ -5,7 +5,7 @@ import {
   CreateDateColumn,
 } from 'typeorm';
 
-@Entity('token_transfer_entity')
+@Entity('token_transfers')
 export class TokenTransferEntity {
   @PrimaryGeneratedColumn()
   id!: number;

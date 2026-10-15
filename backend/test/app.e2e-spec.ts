@@ -6,6 +6,7 @@ import * as path from 'path';
 import * as request from 'supertest';
 import { App } from 'supertest/types';
 import { PrivateKey } from '@hashgraph/sdk';
+import { DataSource } from 'typeorm';
 import { AppModule } from './../src/app.module';
 import { enableAppCors } from './../src/cors';
 
@@ -52,6 +53,22 @@ describe('AppController (e2e)', () => {
 
   it('uses the database file given by DATABASE_PATH', () => {
     expect(fs.existsSync(process.env.DATABASE_PATH as string)).toBe(true);
+  });
+
+  it('creates the tables with the expected names', async () => {
+    const dataSource = app.get(DataSource);
+    const rows = await dataSource.query<{ name: string }[]>(
+      "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name",
+    );
+
+    expect(rows.map((row) => row.name)).toEqual([
+      'accounts',
+      'associations',
+      'messages',
+      'token_transfers',
+      'tokens',
+      'topics',
+    ]);
   });
 
   it('/ (GET) sends the configured CORS origin, and never another one', async () => {
