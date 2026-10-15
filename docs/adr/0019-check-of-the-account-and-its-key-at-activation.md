@@ -62,6 +62,7 @@ Tests and builds
 
 - `pnpm test` runs 7 suites and 48 tests, all passing (46 before, 2 added). `pnpm --filter backend lint` printed nothing, `format:check` printed "All matched files use Prettier code style!", `pnpm --filter backend test:e2e` runs 7 tests, all passing, and `pnpm --filter backend build` printed no error.
 - After the last change of `frontend/lib/account-key.ts`, `pnpm --filter frontend lint` printed nothing and `pnpm --filter frontend build` succeeded, with the six routes listed.
+- The CI was green on GitHub Actions for the commit that holds these changes (run of 2026-10-14, 21:28 UTC) and again on the head of the branch on 2026-10-15 (run #55, which also holds the changes of ADR 0020). The CI installs with `--frozen-lockfile`, so the lockfile changed by `pnpm add` was accepted.
 
 The answer of the backend
 
@@ -108,7 +109,6 @@ Run by the assistant in a scratch project outside the repository (Next.js 16.4.0
 
 ### Not proven
 
-- The CI with these changes (the lockfile was changed by `pnpm add`; the CI installs with `--frozen-lockfile`).
 - The answer `null` in the JSON of the backend for an account whose key is not a single key: only the message of the page was observed (it is shown when `key` is `null`, by the reading of the code), and the unit test.
 - A key of the account that is changed on the network after an activation (not examined).
 - The activation of the Ed25519 account with the key as 64 hexadecimal characters after the check of the text was added: it was observed before, and after it only for the ECDSA account.

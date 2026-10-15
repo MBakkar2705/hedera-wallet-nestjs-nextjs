@@ -11,7 +11,7 @@ Claude writes the code in `backend/`, `frontend/` and `docs/`, after a detailed 
 ## Commands (backend)
 
 - Install: `pnpm install`
-- Test: `pnpm test` at the repo root runs the backend tests (7 suites, 46 tests; all must pass)
+- Test: `pnpm test` at the repo root runs the backend tests (7 suites, 48 tests; all must pass)
 
 ## Commands (frontend)
 

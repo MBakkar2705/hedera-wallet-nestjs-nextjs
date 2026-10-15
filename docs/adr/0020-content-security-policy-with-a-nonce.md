@@ -60,6 +60,7 @@ Checks of the code
 
 - `pnpm --filter frontend lint` printed nothing, with `proxy.ts` enforcing and the changed `app/layout.tsx`. The production build succeeded and listed the routes as `ƒ`.
 - The search of the production build for `eval(` and `new Function` described in the Context (by the assistant).
+- The CI was green on GitHub Actions for the commit that added `proxy.ts` (run #54, 1 min 4 s) and for the same content after the messages of the two commits of the branch were rewritten (run #55, 54 s). The CI runs the frontend lint and build; the frontend has no test.
 
 Report-only, before enforcing
 
@@ -82,7 +83,6 @@ Run by the assistant in a scratch project outside the repository (Next.js 16.4.0
 
 ### Not proven
 
-- The CI with these changes (it runs the frontend lint and build; the frontend has no test).
 - The operations themselves (an HBAR transfer, a token or a topic operation) under the enforced policy: only the pages were loaded, and the lookup and the activation (calls to the API) were run.
 - The links between pages (`next/link`, which prefetch) under the enforced policy: the pages were opened by typing their address.
 - That two requests get two different nonces: only one header was read.
