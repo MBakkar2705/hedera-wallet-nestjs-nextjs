@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import {
   AccountInfoQuery,
   Client,
@@ -8,6 +9,18 @@ import {
 // 64 hexadecimal characters, with or without the 0x prefix. This text does not
 // say the type of the key (Ed25519 or ECDSA).
 const RAW_KEY = /^(?:0x)?[0-9a-f]{64}$/i;
+
+// A text the SDK cannot read as a key is a mistake of the caller, not a
+// server error. The message never repeats the text.
+function parseKey(read: () => PrivateKey): PrivateKey {
+  try {
+    return read();
+  } catch {
+    throw new BadRequestException(
+      'The private key is not valid: use a DER key or 64 hexadecimal characters',
+    );
+  }
+}
 
 // Reads the private key that signs for an account.
 //
@@ -21,7 +34,7 @@ export async function readPrivateKey(
   keyText: string,
 ): Promise<PrivateKey> {
   if (!RAW_KEY.test(keyText)) {
-    return PrivateKey.fromString(keyText);
+    return parseKey(() => PrivateKey.fromString(keyText));
   }
 
   // Errors are not caught here: HederaExceptionFilter maps them to HTTP.
@@ -34,9 +47,9 @@ export async function readPrivateKey(
   if (info.key instanceof PublicKey) {
     const hex = keyText.replace(/^0x/i, '');
     return info.key.type === 'secp256k1'
-      ? PrivateKey.fromStringECDSA(hex)
-      : PrivateKey.fromStringED25519(hex);
+      ? parseKey(() => PrivateKey.fromStringECDSA(hex))
+      : parseKey(() => PrivateKey.fromStringED25519(hex));
   }
 
-  return PrivateKey.fromString(keyText);
+  return parseKey(() => PrivateKey.fromString(keyText));
 }

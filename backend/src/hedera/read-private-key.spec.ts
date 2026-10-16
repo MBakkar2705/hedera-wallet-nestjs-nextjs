@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { AccountInfoQuery, Client, KeyList, PrivateKey } from '@hashgraph/sdk';
 import { readPrivateKey } from './read-private-key';
 
@@ -99,5 +100,28 @@ describe('readPrivateKey()', () => {
     await expect(
       readPrivateKey(client, '0.0.1', key.toStringRaw()),
     ).rejects.toThrow('Simulated SDK failure');
+  });
+
+  it('rejects a public key with a 400, without any query', async () => {
+    const publicKey = PrivateKey.generateED25519().publicKey;
+
+    await expect(
+      readPrivateKey(client, '0.0.1', publicKey.toStringDer()),
+    ).rejects.toThrow(BadRequestException);
+    expect(AccountInfoQuery).not.toHaveBeenCalled();
+  });
+
+  it('rejects a text that is not a key with a 400, without repeating it', async () => {
+    const text = 'not a key';
+    let error: unknown;
+
+    try {
+      await readPrivateKey(client, '0.0.1', text);
+    } catch (e) {
+      error = e;
+    }
+
+    expect(error).toBeInstanceOf(BadRequestException);
+    expect((error as BadRequestException).message).not.toContain(text);
   });
 });
