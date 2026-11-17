@@ -7,5 +7,10 @@
     "test:cov": "pnpm --filter backend test:cov",
     "start": "pnpm --filter backend start",
     "build": "pnpm --filter backend build"
+  },
+  "pnpm": {
+    "overrides": {
+      "protobufjs@8.0.0": "8.0.1"
+    }
   }
 }

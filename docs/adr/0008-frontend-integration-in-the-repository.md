@@ -2,6 +2,7 @@
 
 - Status: Accepted (decision 6 carried out by ADR 0012)
 - Date: 2026-10-08
+- Note (2026-11-17): The frontend is now Next.js 16.4.6 (item 31 of `docs/backend-evolutions.md`). The line of this ADR that names Next.js 16.4.0 records the scaffold of 2026-10-08.
 
 ## Context
 

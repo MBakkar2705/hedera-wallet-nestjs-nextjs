@@ -2,6 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-10-15
+- Note (2026-11-17): Observed by the author with Next.js 16.4.6 (development mode, Edge InPrivate): `GET /accounts` answers HTTP 200 with a `content-security-policy` header that carries a nonce and `'strict-dynamic'` (and `'unsafe-eval'` in `script-src`, not compared with a production build), and the `Link` preload headers carry the same nonce; the four pages display and the console shows only the messages of the development server, no red error. The operations of the first item of "Not proven" (an HBAR transfer, the creation of a token and of a topic) are no longer unobserved: they were run in development mode, where `proxy.ts` sets the policy on every page, together with the creation of an account, the publication of a message and the association of a token; the transfer of tokens was not run. Still not proven: two requests with two nonces (one header read in this run), the production mode, and browsers other than Edge.
 
 ## Context
 
