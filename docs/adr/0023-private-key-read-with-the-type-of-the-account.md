@@ -2,6 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-10-15
+- Note (2026-11-17): The item of "Not proven" about a public key typed in the field of the private key (item 21) is no longer current. Observed by the author on the running backend (curl, 2026-10-16): the public key in DER (88 characters) answered HTTP 500, with `BadKeyError: invalid private key length: 44 bytes` in the log, thrown in `readPrivateKey` before any query; the public key in raw form (64 hexadecimal characters) is read as a private key, starts the query of this decision, and Hedera answers HTTP 400 `INVALID_SIGNATURE`. `readPrivateKey` now throws a `BadRequestException` (HTTP 400, with a message that does not repeat the text) when the SDK cannot read the text; observed on `POST /accounts/transfer`, `POST /tokens/associate` and `POST /tokens/transfer` with the public key in DER. This does not change the decision of ADR 0014: the error of the reading is not an error of Hedera, and the filter would have had to recognize a class of the SDK that was not found among its exports (a search of two declaration files, not a full check). The suite `read-private-key.spec.ts` has 9 tests, and `pnpm test` runs 60. The other items of "Not proven" are unchanged.
 
 ## Context
 
