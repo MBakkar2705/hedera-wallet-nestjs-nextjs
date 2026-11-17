@@ -212,7 +212,7 @@ Sample response:
 {
   "accountId": "0.0.6372035",
   "publicKey": "302a3005...c402c55",
-  "privateKey": "302e0201...fc705d2e0",
+  "privateKey": "302e020100300506032b657004220420...",
   "initialBalance": 10
 }
 
@@ -467,7 +467,7 @@ Required DTO fields:
 
 Test command:
 
-curl.exe -X POST http://localhost:3000/tokens/associate -H "Content-Type: application/json" -d "{\"accountId\":\"0.0.6372035\",\"privateKey\":\"302e0200506032b......d2e0\",\"tokenId\":\"0.0.6371281\"}"
+curl.exe -X POST http://localhost:3000/tokens/associate -H "Content-Type: application/json" -d "{\"accountId\":\"0.0.6372035\",\"privateKey\":\"302e020100300506032b657004220420...\",\"tokenId\":\"0.0.6371281\"}"
 
 Sample response:
 
@@ -520,7 +520,7 @@ Required DTO fields:
 
 Test command:
 
-curl.exe -X POST http://localhost:3000/tokens/transfer -H "Content-Type: application/json" -d "{\"fromAccountId\":\"0.0.6106565\",\"fromPrivateKey\":\"302e020100300506032b657004220420e7eb4d09...ac74\",\"toAccountId\":\"0.0.6372035\",\"tokenId\":\"0.0.6371281\",\"amount\":100}"
+curl.exe -X POST http://localhost:3000/tokens/transfer -H "Content-Type: application/json" -d "{\"fromAccountId\":\"0.0.6106565\",\"fromPrivateKey\":\"302e020100300506032b657004220420...\",\"toAccountId\":\"0.0.6372035\",\"tokenId\":\"0.0.6371281\",\"amount\":100}"
 
 Sample response:
 
