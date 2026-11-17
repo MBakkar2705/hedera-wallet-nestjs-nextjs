@@ -3,6 +3,7 @@
 - Status: Accepted (the run command amended by the note of 2026-10-11)
 - Date: 2026-10-09
 - Note (2026-10-11): `docker run --init` was tried. The run command is now `docker run --rm --init -p 3000:3000 --env-file backend/.env hedera-wallet`. The Dockerfile is unchanged, and `--init` must be given at each start. Observed by the author: without `--init`, Ctrl+C had no effect after about 30 seconds and `docker stop` took about 10 seconds; with `--init`, Ctrl+C stopped the container in about 2 seconds. In the Nest log, the application is process 1 without `--init` and process 7 with it. The cause was not tested separately. Another way to get the same result (in the image or in the code) was not evaluated. The last item of "Consequences" and the last item of "Not proven" are no longer current.
+- Note (2026-11-17): The image was rebuilt with `docker build --pull` after the update of the dependencies (item 31 of `docs/backend-evolutions.md`): 24 steps, exit code 0, and `node -v` in the image gives v22.23.5 (observed by the author). The container, started with real credentials (`docker run --rm --init -p 3000:3000 --env-file backend/.env hedera-wallet`), answers `GET /accounts/:accountId` with HTTP 200 (observed by the author with curl). The first half of the item of "Not proven" about the requests from the host that call Hedera is no longer current; where the database file ends up in the container, and the size of the image, were not examined in this note.
 
 ## Context
 
