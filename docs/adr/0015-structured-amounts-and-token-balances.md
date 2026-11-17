@@ -3,6 +3,7 @@
 - Status: Accepted
 - Date: 2026-10-13
 - Note (2026-10-13): The last item of "Not proven" (the CI with this change) is no longer current: the CI ran green on the commit of this decision (reported by the author). The checks of the pull request were not read at this date.
+- Note (2026-11-17): The item of "Not proven" about the status of `POST /accounts` is no longer current. Observed by the author on the running backend (curl, 2026-10-16), the route answers 201, not the documented 200; the documentation of the route now says 201 (item 22). The other items of "Not proven" are unchanged.
 
 ## Context
 

@@ -1124,7 +1124,7 @@ The following endpoints — POST /accounts, GET /accounts/:accountId, and POST /
 
 	- 201: success for account creation and HBAR transfer
 	- 200: success for balance retrieval
-	- 400: validation errors or Hedera SDK exceptions (e.g. invalid accountId, insufficient HBAR)
+	- 400: validation errors, a private key that cannot be read, or Hedera SDK exceptions (e.g. invalid accountId, insufficient HBAR)
 
 - DTO fields annotated with @ApiProperty() for Swagger schema generation
 
@@ -1279,6 +1279,7 @@ The backend evolutions listed in [docs/backend-evolutions.md](docs/backend-evolu
 | Strict TypeScript | `strict: true` in the backend, with `!` on the 75 properties of the entities and DTO that a library fills; the CI builds the backend | 16, 25 | 0018 |
 | Frontend CSP      | An account is checked when it is activated (`GET /accounts/:accountId` also returns its public key, and the frontend checks in the browser that the typed private key belongs to it); the lookup button is named Get info; every page carries a Content Security Policy with a nonce for each request | 19 | 0019, 0020 |
 | Hygiene and security | Tables named `topics`, `messages` and `token_transfers` (a new database, no migration), the private key of a created account returned once and no longer stored, a private key of 64 hexadecimal characters read with the type of the account, dead code removed, a ValidationPipe that refuses unknown properties, a Prettier check for the frontend | 17, 18, 26, 27, 28, 29 | 0021, 0022, 0023 |
+| Verification (first part) | The route `POST /accounts` documents 201; a private key that cannot be read answers 400 instead of 500; fragments of private keys removed from the README examples | 21, 22, 30 | 0015, 0023 (notes) |
 
 ---
 
