@@ -1,5 +1,7 @@
 # Hedera Minimalist Wallet
 
+[![CI](https://github.com/MBakkar2705/hedera-wallet-nestjs-nextjs/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/MBakkar2705/hedera-wallet-nestjs-nextjs/actions/workflows/ci.yml)
+
 ## Table of contents
 
 - [Description](#description)
