@@ -4,6 +4,7 @@
 - Date: 2026-10-13
 - Note (2026-10-13): The last item of "Not proven" (the CI with this change) is no longer current: the CI ran green on the commit of this decision (reported by the author). The checks of the pull request were not read at this date.
 - Note (2026-11-17): The item of "Not proven" about the status of `POST /accounts` is no longer current. Observed by the author on the running backend (curl, 2026-10-16), the route answers 201, not the documented 200; the documentation of the route now says 201 (item 22). The other items of "Not proven" are unchanged.
+- Note (2026-11-18): The consequence about the balance without decimals, and the item of "Not proven" about a token with decimals other than 0, are no longer current. Observed by the author (2026-11-18): the lookup of an account that holds 150 units of a token with 2 decimals gave `"balance":"150"`. ADR 0024 adds `decimals` and `amount`, read from the mirror node; `balance` stays in the smallest unit.
 
 ## Context
 

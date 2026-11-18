@@ -9,6 +9,7 @@ import {
   type AccountInfo,
   type CreatedAccount,
 } from "@/lib/accounts";
+import { describeBalance } from "@/lib/token-amount";
 import { checkPrivateKey } from "@/lib/account-key";
 import {
   INACTIVITY_LIMIT_MINUTES,
@@ -257,8 +258,13 @@ export default function AccountsPage() {
                           {token.tokenId}
                         </span>
                       </span>
-                      <span className="font-medium tabular-nums">
-                        {token.balance}
+                      <span className="text-right">
+                        <span className="block font-medium tabular-nums">
+                          {token.amount ?? token.balance}
+                        </span>
+                        <span className="block text-sm text-muted tabular-nums">
+                          {describeBalance(token.balance, token.decimals)}
+                        </span>
                       </span>
                     </li>
                   ))}

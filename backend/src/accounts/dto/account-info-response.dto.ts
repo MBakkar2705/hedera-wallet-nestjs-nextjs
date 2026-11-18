@@ -24,9 +24,27 @@ export class AccountTokenDto {
   @ApiProperty({
     example: '10',
     description:
-      'Balance of the account in the smallest unit of the token, as a string (the number of decimals of the token is not part of this response)',
+      'Balance of the account in the smallest unit of the token, as a string (see "decimals" and "amount")',
   })
   balance!: string;
+
+  @ApiProperty({
+    example: 2,
+    nullable: true,
+    type: Number,
+    description:
+      'Number of decimals of the token, read from the mirror node. null when it could not be read',
+  })
+  decimals!: number | null;
+
+  @ApiProperty({
+    example: '0.10',
+    nullable: true,
+    type: String,
+    description:
+      'The balance with the decimals applied, as an exact decimal string. null when the decimals are unknown',
+  })
+  amount!: string | null;
 }
 
 export class AccountKeyDto {
