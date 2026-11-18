@@ -1284,6 +1284,7 @@ The backend evolutions listed in [docs/backend-evolutions.md](docs/backend-evolu
 | Hygiene and security | Tables named `topics`, `messages` and `token_transfers` (a new database, no migration), the private key of a created account returned once and no longer stored, a private key of 64 hexadecimal characters read with the type of the account, dead code removed, a ValidationPipe that refuses unknown properties, a Prettier check for the frontend | 17, 18, 26, 27, 28, 29 | 0021, 0022, 0023 |
 | Verification (first part) | The route `POST /accounts` documents 201; a private key that cannot be read answers 400 instead of 500; fragments of private keys removed from the README examples | 21, 22, 30 | 0015, 0023 (notes) |
 | Security updates | Next.js 16.4.6, the backend dependencies updated inside their ranges, an override of `protobufjs` 8.0.1, a CI status badge | 31 | 0005, 0006, 0008, 0019, 0020 (notes) |
+| Verification (second part) | The decimals of the tokens read from the mirror node and shown by the frontend (ADR 0024), a README contract fix, a dead line removed, and the checks of the lot recorded in the items and the notes of the ADR | 2, 3, 5, 9, 10, 16, 23, 24, 25, 27, 28, 32, 33, 34 | 0024 (new); notes in 0003-0006, 0010, 0012-0018, 0022, 0023 |
 
 ---
 

@@ -3,6 +3,7 @@
 - Status: Accepted
 - Date: 2026-10-09
 - Note (2026-11-18): The first item of "Not proven" is no longer current: a request that calls Hedera was sent to the containerized backend and the place of its database file was read (see the note of 2026-11-18 in ADR 0005). The other items are unchanged.
+- Note (2026-11-18): The item of "Not proven" about a fresh clone is partly no longer current. Observed by the author (lot Verification, 2026-11-18), on a clone of `main` (`b3c540f`) in a folder outside the repository: `backend/.env` was copied from the working folder, not created from the template; `pnpm install` added 1,162 packages in 51.2 s (the install script of `sqlite3` ran; the build scripts of `@parcel/watcher`, `@scarf/scarf` and `unrs-resolver` were ignored); `pnpm run start` started the backend with its 11 routes; `GET /` answered 200, `GET /accounts/0.0.11035637` answered with the account, `GET /tokens` an empty list and `GET /api` (Swagger) 200; `pnpm --filter frontend dev` served `/accounts` and `/tokens` with 200 and no red error in the console. Limits: the install reused the global cache of pnpm (1,137 packages reused, 0 downloaded), the tests were not run in the clone, only the development mode and only Windows were tried. The clone could not be deleted with `Remove-Item -Recurse` because of paths longer than 260 characters in `node_modules`; `rmdir` with the prefix `\\?\` deleted it.
 
 ## Context
 

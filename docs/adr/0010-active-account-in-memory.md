@@ -2,6 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-10-08
+- Note (2026-11-18): The item of "Not proven" about the error path of a transfer is no longer current: observed by the author (2026-10-16), a transfer of 20 ℏ from an account that holds 9 ℏ shows `Hedera rejected the request: INSUFFICIENT_ACCOUNT_BALANCE` on the page (the HTTP status was not read). A transfer of HBAR from an activated account also succeeded from the page on 2026-11-17. The other items are unchanged.
 
 ## Context
 
