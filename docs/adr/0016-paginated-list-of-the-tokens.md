@@ -3,6 +3,7 @@
 - Status: Accepted
 - Date: 2026-10-13
 - Note (2026-10-13): The last item of "Not proven" (the CI with this change) is no longer current: the CI ran green on the commit of this decision (reported by the author).
+- Note (2026-11-18): The first four items of "Not proven" are no longer current. Observed by the author (lot Verification, 2026-10-16, development mode, Edge InPrivate, on a throwaway database with 25 rows, then 26, then 10,026): the buttons Previous and Next on 3 pages (Previous disabled on page 1, Next disabled on page 3, Previous goes back from 3 to 2 to 1); with 10,026 rows the page shows `Page 1 of 1003 (10026 tokens)`, and `GET /tokens` answers in 0.226 to 0.256 s for `page=1&limit=10`, 0.236 to 0.256 s for the last page and 0.228 to 0.248 s for `limit=100` (5 requests each, same machine, development backend), against 0.222 to 0.259 s on an empty database, so no difference at this resolution (the cost of the count alone was not separated); a token inserted in the table while page 1 was shown: Next showed page 2 of 3 (26 tokens) starting with the token that ended page 1, so one token appears on two pages until page 1 is read again, which is the behaviour of a pagination by page number (the cursor of this ADR was not tried); with the backend stopped, the list shows "Cannot reach the API at http://localhost:3000. Is the backend running?" and the rest of the page displays. Observed with curl (same day): the messages of `page=abc`, `limit=abc` and other wrong values, see item 23.
 
 ## Context
 

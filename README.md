@@ -183,8 +183,8 @@ This endpoint creates a new Hedera account with an initial HBAR balance.
 Controller definition:
 
 @Post()
-create(@Body() dto: CreateAccountDto) {
-  return this.accountsService.createAccount(dto);
+create(@Body() { initialBalance }: CreateAccountDto) {
+  return this.accountsService.createAccount(initialBalance);
 }
 
 Service logic:
@@ -518,7 +518,7 @@ Required DTO fields:
 - fromPrivateKey: string (DER, or 64 hexadecimal characters, read with the type of the account as above)
 - toAccountId: string
 - tokenId: string
-- amount: number (≥ 0)
+- amount: number (≥ 1)
 
 Test command:
 
