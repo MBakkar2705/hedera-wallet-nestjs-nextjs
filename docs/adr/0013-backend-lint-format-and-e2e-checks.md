@@ -2,6 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-10-11
+- Note (2026-11-18): Observed by the author (2026-10-16): Ctrl+C on the container (started with `--init`) stops it with exit code 130 and prints nothing, which does not show whether `onModuleDestroy` closed the client; the third item of "Not proven" stays.
 
 ## Context
 

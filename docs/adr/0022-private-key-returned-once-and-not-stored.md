@@ -2,6 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-10-15
+- Note (2026-11-18): The first item of "Not proven" is partly no longer current. Observed by the author (lot Verification, 2026-10-16, `docker logs` of the container started at 09:38, with a script that looks for pieces of the key without printing it): after the creation of an account, an HBAR transfer, an association and a transfer of tokens, none of four pieces of 16 characters taken from the private key (96 characters) of the created account and of the operator account was found in the log, and the control (a word that is in the log) was found; the backend writes nothing for these requests. Not covered: another writing of the key (base64, split text), the requests in error, and the backend started directly with `pnpm start`.
 
 ## Context
 

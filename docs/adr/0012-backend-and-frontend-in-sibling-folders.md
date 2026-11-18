@@ -2,6 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-10-09
+- Note (2026-11-18): The first item of "Not proven" is no longer current: a request that calls Hedera was sent to the containerized backend and the place of its database file was read (see the note of 2026-11-18 in ADR 0005). The other items are unchanged.
 
 ## Context
 

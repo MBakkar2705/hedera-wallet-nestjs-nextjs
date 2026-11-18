@@ -3,6 +3,7 @@
 - Status: Accepted
 - Date: 2026-10-14
 - Note (2026-10-14): The first item of "Not proven" (the CI with these changes) is no longer current: the CI ran green on commit `1718c2a`, including the new step `pnpm --filter backend build` (reported by the author).
+- Note (2026-11-18): The third item of "Not proven" is no longer current. Observed by the author (lot Verification, 2026-10-16): the Docker image builds (24 steps, exit code 0) and the container started with real credentials answers a request that calls Hedera (see the note of 2026-11-18 in ADR 0005).
 
 ## Context
 
