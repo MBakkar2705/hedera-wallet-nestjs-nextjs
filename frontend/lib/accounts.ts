@@ -20,6 +20,12 @@ export interface AccountToken {
   symbol: string;
   // In the smallest unit of the token, as a string.
   balance: string;
+  // The number of decimals of the token, read by the backend from the mirror
+  // node. null when it could not be read.
+  decimals: number | null;
+  // The balance with the decimals applied, as an exact decimal string. null
+  // when the decimals are unknown.
+  amount: string | null;
 }
 
 export interface AccountKey {

@@ -2,6 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-10-09
+- Note (2026-11-18): The third item of "Not proven" is no longer current: the end-to-end test runs and its 10 tests pass (observed by the author, 2026-10-16, and in the step `Backend e2e tests` of the CI runs #68 and #71; item 11).
 
 ## Context
 

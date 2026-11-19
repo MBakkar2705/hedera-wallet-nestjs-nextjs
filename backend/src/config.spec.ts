@@ -1,9 +1,11 @@
 import {
   DEFAULT_CORS_ORIGIN,
   DEFAULT_DATABASE_PATH,
+  DEFAULT_MIRROR_NODE_URL,
   DEFAULT_PORT,
   getCorsOrigin,
   getDatabasePath,
+  getMirrorNodeUrl,
   getPort,
 } from './config';
 
@@ -12,12 +14,14 @@ describe('config', () => {
     CORS_ORIGIN: process.env.CORS_ORIGIN,
     PORT: process.env.PORT,
     DATABASE_PATH: process.env.DATABASE_PATH,
+    MIRROR_NODE_URL: process.env.MIRROR_NODE_URL,
   };
 
   beforeEach(() => {
     delete process.env.CORS_ORIGIN;
     delete process.env.PORT;
     delete process.env.DATABASE_PATH;
+    delete process.env.MIRROR_NODE_URL;
   });
 
   afterAll(() => {
@@ -79,5 +83,21 @@ describe('config', () => {
         expect(() => getPort()).toThrow(`Invalid PORT "${value}"`);
       },
     );
+  });
+
+  describe('getMirrorNodeUrl()', () => {
+    it('returns the default URL when MIRROR_NODE_URL is absent', () => {
+      expect(getMirrorNodeUrl()).toBe(DEFAULT_MIRROR_NODE_URL);
+    });
+
+    it('returns the default URL when MIRROR_NODE_URL is empty', () => {
+      process.env.MIRROR_NODE_URL = '';
+      expect(getMirrorNodeUrl()).toBe(DEFAULT_MIRROR_NODE_URL);
+    });
+
+    it('returns the URL given by MIRROR_NODE_URL', () => {
+      process.env.MIRROR_NODE_URL = 'https://mirror.example.com';
+      expect(getMirrorNodeUrl()).toBe('https://mirror.example.com');
+    });
   });
 });

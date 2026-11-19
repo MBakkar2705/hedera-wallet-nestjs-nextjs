@@ -2,6 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-10-09
+- Note (2026-11-19): Observed by the author in Chrome 157 (private window, production mode, `prefers-color-scheme: dark` emulated in DevTools): the dark mode displays on the four pages and the author judges it good. The theme follows the system; there is no switch. Lighthouse 13.5.0 (Snapshot, Desktop, Accessibility) on `/topics`: dark mode 20 audits passed and 1 failed (contrast, 4 elements: the active tab, "Create topic", "Publish", "Load messages"); light mode 21 of 21. The ratios were computed by the assistant from `frontend/app/globals.css`, not measured by Chrome: active tab 5.25:1 in light and 3.43:1 in dark, buttons 6.12:1 in light and 4.35:1 in dark (4.5:1 is needed); the same `--brand` colour is used for text and for button backgrounds, so a fix needs two values (item 36 of `docs/backend-evolutions.md`). Not proven: the contrast of each element measured by a browser tool; the pages other than `/topics`; the manual checks of Lighthouse (10); the browsers other than Chrome.
 
 ## Context
 

@@ -183,8 +183,8 @@ This endpoint creates a new Hedera account with an initial HBAR balance.
 Controller definition:
 
 @Post()
-create(@Body() dto: CreateAccountDto) {
-  return this.accountsService.createAccount(dto);
+create(@Body() { initialBalance }: CreateAccountDto) {
+  return this.accountsService.createAccount(initialBalance);
 }
 
 Service logic:
@@ -285,7 +285,7 @@ Since 2026-10-13 the response also contains `balance` and `tokens`; the fields `
   ]
 }
 
-In the real answer, `tokens` and `tokenAssociations` both had 285 entries in the same order, and 285 is also the number of associations given by the public Hedera mirror node for this account. A token balance is in the smallest unit of the token: its decimals are not part of the response. The page `/accounts` of the frontend lists the tokens with their symbol, ID and balance.
+In the real answer, `tokens` and `tokenAssociations` both had 285 entries in the same order, and 285 is also the number of associations given by the public Hedera mirror node for this account. A token `balance` is in the smallest unit of the token. Since 2026-11-18 each token also carries `decimals` (the number of decimals of the token, read from the mirror node, `null` when it could not be read) and `amount` (the balance with the decimals applied, as an exact decimal string, `null` when the decimals are unknown), see [ADR 0024](docs/adr/0024-decimals-of-the-tokens-from-the-mirror-node.md). Observed by the author on the running backend (2026-11-18): `{ "tokenId": "0.0.11498627", "symbol": "DEC2", "balance": "150", "decimals": 2, "amount": "1.50" }` for a token created with 2 decimals, and `{ "tokenId": "0.0.11046969", "symbol": "TST6", "balance": "10", "decimals": 0, "amount": "10" }` for a token created by the backend. The page `/accounts` of the frontend lists the tokens with their symbol, ID and `amount`, and under it the balance in units and the decimals; the form of the transfer of tokens takes units and says what the amount typed is worth.
 
 Since 2026-10-14 the response also contains `key`, the public key of the account, so that a client can check that a private key belongs to it (see [ADR 0019](docs/adr/0019-check-of-the-account-and-its-key-at-activation.md)): `{ "type": "ED25519", "publicKey": "<64 hexadecimal characters>" }` for a single Ed25519 key, the same with `"secp256k1"` and 66 characters for a single ECDSA key, and `null` when the key of the account is a list of keys, a threshold key or a contract key. Observed with curl: an Ed25519 account and an ECDSA account both answered with their key, and the key of the first one is the one the author noted when the account was created. The answer `null` was not observed on the network, only in a unit test.
 
@@ -518,7 +518,7 @@ Required DTO fields:
 - fromPrivateKey: string (DER, or 64 hexadecimal characters, read with the type of the account as above)
 - toAccountId: string
 - tokenId: string
-- amount: number (≥ 0)
+- amount: number (≥ 1)
 
 Test command:
 
@@ -828,11 +828,12 @@ copy backend\.env.example backend\.env
 
 The application exits at startup, with `Missing environment variable(s): ...`, if one of the two is missing or empty. Observed (2026-10-13) with both absent; the cases with only one absent or with an empty value are covered by unit tests only. `OPERATOR_ID` and `OPERATOR_KEY`, read before [ADR 0017](docs/adr/0017-one-operator-account-and-one-shared-hedera-client.md), are no longer read: an older `.env` can keep them (the backend started with them present) or drop them (the backend started with them commented out); both observed. Use a testnet account only. See [ADR 0007](docs/adr/0007-environment-variables.md) and [ADR 0017](docs/adr/0017-one-operator-account-and-one-shared-hedera-client.md).
 
-Two optional variables have a default and can be added to the same `.env` file:
+Four optional variables have a default and can be added to the same `.env` file:
 
 - `CORS_ORIGIN`: the one origin allowed to call the API from a browser. Default: `http://localhost:3001`. An empty value gives the default.
 - `PORT`: the port the API listens on. Default: `3000`. A value that is not an integer between 1 and 65535 stops the application at startup with `Invalid PORT "..."`.
 - `DATABASE_PATH`: the SQLite file. Default: `hedera-wallet.db`, relative to the folder the backend is started from (`backend/` with `pnpm start`). An empty value gives the default.
+- `MIRROR_NODE_URL`: the mirror node that gives the decimals of the tokens (ADR 0024). Default: `https://testnet.mirrornode.hedera.com`. An empty value gives the default. When the mirror node cannot be read, the lookup of an account still answers, with `decimals` and `amount` set to `null`.
 
 Observed (2026-10-13): with `PORT=3005`, Swagger answered on `http://localhost:3005/api`; with `PORT=abc`, the backend printed `Invalid PORT "abc": expected an integer between 1 and 65535` and stopped. The frontend reads the API address from `NEXT_PUBLIC_API_URL` (`frontend/lib/api.ts`, default `http://localhost:3000`): it has to be set if `PORT` is changed. That was not tested.
 
@@ -1283,6 +1284,7 @@ The backend evolutions listed in [docs/backend-evolutions.md](docs/backend-evolu
 | Hygiene and security | Tables named `topics`, `messages` and `token_transfers` (a new database, no migration), the private key of a created account returned once and no longer stored, a private key of 64 hexadecimal characters read with the type of the account, dead code removed, a ValidationPipe that refuses unknown properties, a Prettier check for the frontend | 17, 18, 26, 27, 28, 29 | 0021, 0022, 0023 |
 | Verification (first part) | The route `POST /accounts` documents 201; a private key that cannot be read answers 400 instead of 500; fragments of private keys removed from the README examples | 21, 22, 30 | 0015, 0023 (notes) |
 | Security updates | Next.js 16.4.6, the backend dependencies updated inside their ranges, an override of `protobufjs` 8.0.1, a CI status badge | 31 | 0005, 0006, 0008, 0019, 0020 (notes) |
+| Verification (second part) | The decimals of the tokens read from the mirror node and shown by the frontend (ADR 0024), a README contract fix, a dead line removed, and the checks of the lot recorded in the items and the notes of the ADR | 2, 3, 5, 9, 10, 16, 23, 24, 25, 27, 28, 32, 33, 34, 35, 36, 37, 38 | 0024 (new); notes in 0003-0006, 0010-0020, 0022, 0023 |
 
 ---
 
@@ -1323,6 +1325,7 @@ The records are numbered in the order of the project: first the backend, then th
 - [ADR 0021: Explicit names for the tables, and a new database instead of a migration](docs/adr/0021-explicit-table-names-and-a-new-database.md)
 - [ADR 0022: The private key of a created account is returned once and not stored](docs/adr/0022-private-key-returned-once-and-not-stored.md)
 - [ADR 0023: A private key of 64 hexadecimal characters is read with the type of the account](docs/adr/0023-private-key-read-with-the-type-of-the-account.md)
+- [ADR 0024: The decimals of the tokens come from the mirror node](docs/adr/0024-decimals-of-the-tokens-from-the-mirror-node.md)
 
 The records were renumbered to follow this order. Earlier commit messages use the former numbers: former 0001 is now 0009, 0002 is 0008, 0003 is 0007, 0005 is 0010, 0006 is 0011 and 0007 is 0012. The former 0008 to 0012 were never committed under those numbers. ADR 0004 keeps its number.
 

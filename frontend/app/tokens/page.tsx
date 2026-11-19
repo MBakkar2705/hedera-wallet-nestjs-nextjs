@@ -2,7 +2,12 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { getErrorMessage } from "@/lib/api";
-import { ACCOUNT_ID_PATTERN } from "@/lib/accounts";
+import {
+  ACCOUNT_ID_PATTERN,
+  getAccount,
+  type AccountToken,
+} from "@/lib/accounts";
+import { describeUnits } from "@/lib/token-amount";
 import { useActiveAccount } from "@/lib/active-account";
 import {
   associateToken,
@@ -83,9 +88,54 @@ export default function TokensPage() {
     };
   }, [listPage, listVersion]);
 
+  // The tokens of the active account, to tell the decimals of the token typed
+  // in the form of the transfer. Bumped after an association or a transfer.
+  const [holdings, setHoldings] = useState<{
+    accountId: string;
+    tokens: AccountToken[];
+  } | null>(null);
+  const [holdingsVersion, setHoldingsVersion] = useState(0);
+  const activeAccountId = account?.accountId ?? null;
+
+  useEffect(() => {
+    if (activeAccountId === null) return;
+    // A late answer must not replace a newer one.
+    let cancelled = false;
+
+    async function loadHoldings(accountId: string) {
+      try {
+        const info = await getAccount(accountId);
+        if (!cancelled) setHoldings({ accountId, tokens: info.tokens });
+      } catch {
+        // The hint then says that the decimals are unknown.
+        if (!cancelled) setHoldings({ accountId, tokens: [] });
+      }
+    }
+
+    void loadHoldings(activeAccountId);
+    return () => {
+      cancelled = true;
+    };
+  }, [activeAccountId, holdingsVersion]);
+
   const totalPages = tokenList
     ? Math.max(1, Math.ceil(tokenList.total / tokenList.limit))
     : 1;
+
+  // Nothing is said while the tokens are loading or while the ID is incomplete.
+  const typedToken = transferTokenInput.trim();
+  const holding =
+    holdings?.accountId === activeAccountId
+      ? holdings?.tokens.find((token) => token.tokenId === typedToken)
+      : undefined;
+  const unitsHint =
+    holdings?.accountId === activeAccountId && TOKEN_ID_PATTERN.test(typedToken)
+      ? describeUnits(
+          holding?.decimals ?? null,
+          holding?.symbol ?? "",
+          amountInput,
+        )
+      : undefined;
 
   async function handleCreate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -148,6 +198,7 @@ export default function TokensPage() {
           tokenId,
         }),
       );
+      setHoldingsVersion((version) => version + 1);
     } catch (caught) {
       setAssociateError(getErrorMessage(caught));
     } finally {
@@ -190,6 +241,7 @@ export default function TokensPage() {
           amount,
         }),
       );
+      setHoldingsVersion((version) => version + 1);
     } catch (caught) {
       setTransferError(getErrorMessage(caught));
     } finally {
@@ -379,7 +431,10 @@ export default function TokensPage() {
                   placeholder="0.0.123456"
                 />
               </Field>
-              <Field label="Amount (whole number, at least 1)">
+              <Field
+                label="Amount in units (whole number, at least 1)"
+                hint={unitsHint}
+              >
                 <Input
                   value={amountInput}
                   onChange={(event) => setAmountInput(event.target.value)}

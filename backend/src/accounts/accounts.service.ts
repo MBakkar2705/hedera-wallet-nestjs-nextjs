@@ -16,6 +16,9 @@ import {
 } from '@hashgraph/sdk';
 import { TransferHbarDto } from './dto/transfer-hbar.dto';
 import { readPrivateKey } from '../hedera/read-private-key';
+import { readTokenDecimals } from '../hedera/mirror-node';
+import { formatTokenAmount } from '../hedera/token-amount';
+import { getMirrorNodeUrl } from '../config';
 
 @Injectable()
 export class AccountsService {
@@ -72,22 +75,33 @@ export class AccountsService {
       .setAccountId(accountId)
       .execute(this.client);
 
+    const relationships = Array.from(info.tokenRelationships.values());
+    // The decimals come from the mirror node: null when it cannot be read.
+    const decimals =
+      relationships.length > 0
+        ? await readTokenDecimals(getMirrorNodeUrl(), info.accountId.toString())
+        : null;
+
     return {
       accountId: info.accountId.toString(),
       hbarBalance: info.balance.toString(),
-      tokenAssociations: Array.from(info.tokenRelationships.values()).map(
-        (rel) => rel.tokenId.toString(),
-      ),
+      tokenAssociations: relationships.map((rel) => rel.tokenId.toString()),
       balance: {
         // toFixed() gives a plain decimal; toString() could use an exponent.
         hbar: info.balance.to(HbarUnit.Hbar).toFixed(),
         tinybars: info.balance.toTinybars().toString(),
       },
-      tokens: Array.from(info.tokenRelationships.values()).map((rel) => ({
-        tokenId: rel.tokenId.toString(),
-        symbol: rel.symbol,
-        balance: rel.balance.toString(),
-      })),
+      tokens: relationships.map((rel) => {
+        const balance = rel.balance.toString();
+        const tokenDecimals = decimals?.get(rel.tokenId.toString()) ?? null;
+        return {
+          tokenId: rel.tokenId.toString(),
+          symbol: rel.symbol,
+          balance,
+          decimals: tokenDecimals,
+          amount: formatTokenAmount(balance, tokenDecimals),
+        };
+      }),
       // Only a single public key can be compared with a private key.
       // A list of keys, a threshold key or a contract key gives null.
       key:

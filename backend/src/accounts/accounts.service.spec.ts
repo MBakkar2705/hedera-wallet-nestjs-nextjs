@@ -3,6 +3,8 @@ import { AccountsService } from './accounts.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { AccountEntity } from './entities/account.entity';
 import * as readPrivateKeyModule from '../hedera/read-private-key';
+import * as mirrorNodeModule from '../hedera/mirror-node';
+import { DEFAULT_MIRROR_NODE_URL } from '../config';
 
 jest.mock('@hashgraph/sdk', () => {
   class Hbar {
@@ -172,6 +174,23 @@ describe('AccountsService', () => {
   });
 
   describe('getAccountInfo()', () => {
+    // The mirror node is not called in these tests.
+    let decimalsSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      decimalsSpy = jest.spyOn(mirrorNodeModule, 'readTokenDecimals');
+      decimalsSpy.mockResolvedValue(
+        new Map([
+          ['0.0.111', 0],
+          ['0.0.222', 2],
+        ]),
+      );
+    });
+
+    afterEach(() => {
+      decimalsSpy.mockRestore();
+    });
+
     it('should fetch account info and return expected structure', async () => {
       const result = await service.getAccountInfo('0.0.12345');
 
@@ -181,11 +200,86 @@ describe('AccountsService', () => {
         tokenAssociations: ['0.0.111', '0.0.222'],
         balance: { hbar: '100', tinybars: '10000000000' },
         tokens: [
-          { tokenId: '0.0.111', symbol: 'AAA', balance: '10' },
-          { tokenId: '0.0.222', symbol: 'BBB', balance: '2500' },
+          {
+            tokenId: '0.0.111',
+            symbol: 'AAA',
+            balance: '10',
+            decimals: 0,
+            amount: '10',
+          },
+          {
+            tokenId: '0.0.222',
+            symbol: 'BBB',
+            balance: '2500',
+            decimals: 2,
+            amount: '25.00',
+          },
         ],
         key: { type: 'ED25519', publicKey: 'mocked-raw-public-key' },
       });
+    });
+
+    it('should read the decimals with the configured mirror node and the account', async () => {
+      await service.getAccountInfo('0.0.12345');
+
+      expect(decimalsSpy).toHaveBeenCalledWith(
+        DEFAULT_MIRROR_NODE_URL,
+        '0.0.12345',
+      );
+    });
+
+    it('should give null decimals and amount when the mirror node cannot be read', async () => {
+      decimalsSpy.mockResolvedValue(null);
+
+      const result = await service.getAccountInfo('0.0.12345');
+
+      expect(result.tokens).toEqual([
+        {
+          tokenId: '0.0.111',
+          symbol: 'AAA',
+          balance: '10',
+          decimals: null,
+          amount: null,
+        },
+        {
+          tokenId: '0.0.222',
+          symbol: 'BBB',
+          balance: '2500',
+          decimals: null,
+          amount: null,
+        },
+      ]);
+    });
+
+    it('should give null for a token that the mirror node does not know', async () => {
+      decimalsSpy.mockResolvedValue(new Map([['0.0.111', 1]]));
+
+      const result = await service.getAccountInfo('0.0.12345');
+
+      expect(result.tokens[0]).toMatchObject({ decimals: 1, amount: '1.0' });
+      expect(result.tokens[1]).toMatchObject({ decimals: null, amount: null });
+    });
+
+    it('should not call the mirror node when the account has no token', async () => {
+      const { AccountInfoQuery, PublicKey } = require('@hashgraph/sdk');
+      AccountInfoQuery.mockImplementationOnce(() => ({
+        setAccountId: jest.fn().mockReturnThis(),
+        execute: jest.fn().mockResolvedValue({
+          accountId: { toString: () => '0.0.12345' },
+          key: new PublicKey('ED25519', 'mocked-raw-public-key'),
+          balance: {
+            toString: () => '100',
+            to: () => ({ toFixed: () => '100' }),
+            toTinybars: () => ({ toString: () => '10000000000' }),
+          },
+          tokenRelationships: new Map(),
+        }),
+      }));
+
+      const result = await service.getAccountInfo('0.0.12345');
+
+      expect(result.tokens).toEqual([]);
+      expect(decimalsSpy).not.toHaveBeenCalled();
     });
 
     it('should return the type and the raw public key of an ECDSA key', async () => {

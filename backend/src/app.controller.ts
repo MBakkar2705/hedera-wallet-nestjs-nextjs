@@ -16,7 +16,6 @@ export class AppController {
     description: 'Returns a basic confirmation string',
   })
   getHello(): string {
-    // return 'Welcome to Hedera Wallet API by M. Bakkar';
     return this.appService.getHello();
   }
 }
